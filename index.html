@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex, nofollow, noarchive">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>環境振動計測</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="環境振動">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#EDF1F4" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#10171E" media="(prefers-color-scheme: dark)">
+
+<style>
+:root{
+  --bg:#EDF1F4; --panel:#FFFFFF; --ink:#17232E; --muted:#5D6D7C; --line:#D3DBE2;
+  --accent:#1E6BAE; --accent-ink:#FFFFFF; --noise:#97A4B1; --warn:#B4461B; --ok:#2B7A4B; --rec:#C0392B;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#10171E; --panel:#17212B; --ink:#E3E9EF; --muted:#93A1AF; --line:#2A3845;
+    --accent:#5AA6E6; --accent-ink:#0C1620; --noise:#5F6D7B; --warn:#EE8B5E; --ok:#5DBE84; --rec:#E8665A;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#10171E; --panel:#17212B; --ink:#E3E9EF; --muted:#93A1AF; --line:#2A3845;
+  --accent:#5AA6E6; --accent-ink:#0C1620; --noise:#5F6D7B; --warn:#EE8B5E; --ok:#5DBE84; --rec:#E8665A;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic UI",sans-serif;
+  font-size:16px;line-height:1.55;-webkit-text-size-adjust:100%}
+.wrap{max-width:760px;margin:0 auto;padding:0 16px 40px}
+header{padding:18px 0 8px}
+h1{font-size:1.35rem;margin:0;letter-spacing:.02em}
+#status{margin:4px 0 0;color:var(--muted);font-size:.92rem;min-height:1.4em}
+#status.warn{color:var(--warn)}
+nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding:8px 0;display:flex;gap:4px;overflow-x:auto}
+nav button{flex:1 0 auto;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:8px 12px;border-radius:8px;font:inherit;font-size:.9rem}
+nav button[aria-selected="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+section{display:none}
+section.on{display:block}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:12px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.stat .v{font-size:1.15rem;font-variant-numeric:tabular-nums;font-weight:600}
+.stat .k{font-size:.75rem;color:var(--muted)}
+.stat.bad .v{color:var(--warn)}
+.seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-top:12px}
+.seg button{flex:1;border:0;background:var(--panel);color:var(--ink);padding:8px 4px;font:inherit;font-size:.88rem}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+canvas{width:100%;display:block}
+#live{height:170px}
+#chart{height:280px}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:.78rem;color:var(--muted);margin-top:6px}
+.legend i{display:inline-block;width:14px;height:3px;vertical-align:middle;margin-right:5px;border-radius:2px}
+.big{width:100%;margin-top:14px;padding:16px;font:inherit;font-size:1.1rem;font-weight:700;border:0;border-radius:12px;background:var(--accent);color:var(--accent-ink)}
+.big.rec{background:var(--rec);color:#fff}
+.btn{font:inherit;font-size:.88rem;padding:8px 12px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink)}
+.btn.danger{color:var(--warn)}
+.row{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.note{font-size:.82rem;color:var(--muted);margin:8px 0 0}
+.note.warn{color:var(--warn)}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:.92rem}
+th,td{text-align:right;padding:6px 4px;border-bottom:1px solid var(--line)}
+th:first-child,td:first-child{text-align:left}
+th{font-weight:600;color:var(--muted);font-size:.8rem}
+td.dim{color:var(--muted)}
+h2{font-size:1rem;margin:0 0 6px}
+.grade{font-size:1.7rem;font-weight:700;margin:6px 0 2px}
+.pass{color:var(--ok)} .fail{color:var(--warn)}
+select,input[type=number]{font:inherit;font-size:.95rem;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink)}
+label.f{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--line)}
+label.f:last-child{border-bottom:0}
+textarea{width:100%;min-height:220px;font-family:ui-monospace,Menlo,monospace;font-size:.78rem;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);padding:8px}
+details summary{cursor:pointer;font-weight:600}
+.bpm{display:flex;align-items:baseline;justify-content:center;gap:10px;margin:8px 0}
+.bpm .n{font-size:3.2rem;font-weight:700;font-variant-numeric:tabular-nums}
+.bpm .u{color:var(--muted)}
+#hz{text-align:center;color:var(--muted);font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;margin:12px 0}
+#beat{width:64px;height:64px;border-radius:50%;margin:14px auto 0;background:var(--line);transition:background .05s}
+#beat.on{background:var(--accent)} #beat.acc{background:var(--rec)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chips button{font:inherit;font-size:.85rem;padding:6px 10px;border-radius:999px;border:1px solid var(--accent);background:transparent;color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (max-width:420px){.stats{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>環境振動計測</h1>
+  <p id="status">端末を床に水平に置き、「測定開始」を押してください。</p>
+</header>
+
+<nav role="tablist">
+  <button data-tab="measure" aria-selected="true">計測</button>
+  <button data-tab="result">結果</button>
+  <button data-tab="eval">評価</button>
+  <button data-tab="metro">メトロノーム</button>
+  <button data-tab="settings">設定</button>
+</nav>
+
+<!-- 計測 -->
+<section id="tab-measure" class="on">
+  <div class="panel">
+    <div class="stats">
+      <div class="stat" id="st-tilt"><div class="v">–</div><div class="k">傾き</div></div>
+      <div class="stat" id="st-rate"><div class="v">–</div><div class="k">サンプリング</div></div>
+      <div class="stat" id="st-time"><div class="v">0 s</div><div class="k">経過時間</div></div>
+      <div class="stat" id="st-n"><div class="v">0</div><div class="k">データ点数</div></div>
+    </div>
+    <div class="seg" id="axisSeg">
+      <button data-axis="x">水平X</button><button data-axis="y">水平Y</button><button data-axis="z" aria-pressed="true">鉛直Z</button>
+    </div>
+    <canvas id="live" style="margin-top:10px"></canvas>
+    <button class="big" id="recBtn">測定開始</button>
+    <p class="note">ケースを外し、硬い床に画面を上にして置いてください。前後の数秒は操作の影響を避けるため解析から除外します。</p>
+    <p class="note">ブラウザ版のセンサー周期は約60 Hzのことが多く、1/3オクターブは25 Hz帯程度までになります。</p>
+  </div>
+</section>
+
+<!-- 結果 -->
+<section id="tab-result">
+  <div class="panel" id="noResult"><p class="note" style="margin:0">まだ測定結果がありません。「計測」タブで測定してください。</p></div>
+  <div id="resultBody" hidden>
+    <div class="panel">
+      <div class="seg" id="viewSeg" style="margin-top:0">
+        <button data-view="asd" aria-pressed="true">スペクトル密度</button><button data-view="amp">フーリエ振幅</button><button data-view="oct">1/3オクターブ</button>
+      </div>
+      <canvas id="chart" style="margin-top:10px"></canvas>
+      <div class="legend" id="legend"></div>
+      <p class="note" id="info"></p>
+    </div>
+    <div class="panel">
+      <h2>卓越振動数</h2>
+      <table id="peaks"></table>
+      <p class="note" id="peakNote"></p>
+    </div>
+    <div class="panel">
+      <h2>自己ノイズ基準</h2>
+      <p class="note" style="margin-top:0">夜間など最も静かなときに硬い台の上で測定した結果を登録すると、スペクトルに重ねて表示し、S/Nが足りないバンドを評価で明示します。</p>
+      <div class="row">
+        <button class="btn" id="saveNoise">この結果を自己ノイズとして登録</button>
+        <button class="btn danger" id="clearNoise" hidden>ノイズ基準を削除</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 評価 -->
+<section id="tab-eval">
+  <div class="panel">
+    <h2>居住性能評価</h2>
+    <select id="curveSel" style="width:100%"></select>
+    <div id="evalBody"><p class="note">測定後に表示されます。</p></div>
+  </div>
+  <div class="panel">
+    <details>
+      <summary>曲線データの編集</summary>
+      <p class="note">AIJ規準・指針の性能曲線の折れ点（f [Hz], a）を原典から入力してください。rank は厳しい曲線ほど小さくします。unit は gal または m/s2、quantity は peak（バンド最大値）または rms。</p>
+      <textarea id="curveJson" spellcheck="false"></textarea>
+      <div class="row">
+        <button class="btn" id="saveCurves">保存して反映</button>
+        <button class="btn danger" id="resetCurves">初期値に戻す</button>
+      </div>
+      <p class="note" id="curveMsg"></p>
+    </details>
+  </div>
+</section>
+
+<!-- メトロノーム -->
+<section id="tab-metro">
+  <div class="panel">
+    <div class="bpm"><span class="n" id="bpmN">120</span><span class="u">BPM</span></div>
+    <div id="hz">2.00 Hz</div>
+    <input type="range" id="bpmR" min="30" max="240" step="1" value="120" aria-label="テンポ">
+    <div class="row" style="justify-content:center">
+      <button class="btn" data-d="-5">−5</button><button class="btn" data-d="-1">−1</button>
+      <button class="btn" data-d="1">+1</button><button class="btn" data-d="5">+5</button>
+    </div>
+    <div id="beat"></div>
+    <button class="big" id="metBtn">メトロノーム開始</button>
+    <div id="suggest"></div>
+    <p class="note warn">スピーカーの振動は計測値に混入します。メトロノームは計測していない別の端末（iPadなど）で鳴らしてください。</p>
+    <p class="note">iPhoneの消音スイッチがオンだと音が出ないことがあります。</p>
+  </div>
+</section>
+
+<!-- 設定 -->
+<section id="tab-settings">
+  <div class="panel">
+    <h2>解析設定</h2>
+    <label class="f">ハイパス [Hz]<input type="number" id="s-hp" step="0.1" min="0" max="2"></label>
+    <label class="f">前後カット [秒]<input type="number" id="s-trim" step="0.5" min="0" max="10"></label>
+    <label class="f">Welchセグメント長<select id="s-seg"><option>256</option><option>512</option><option>1024</option><option>2048</option><option>4096</option></select></label>
+    <label class="f">ピーク探索下限 [Hz]<input type="number" id="s-pmin" step="0.5" min="0.3" max="10"></label>
+    <label class="f">ピーク探索上限 [Hz]<input type="number" id="s-pmax" step="1" min="5" max="50"></label>
+    <label class="f">ノイズ判定 S/N [dB]<input type="number" id="s-snr" step="1" min="0" max="20"></label>
+    <label class="f">1/3オクターブをゼロ位相で計算<input type="checkbox" id="s-zero"></label>
+    <p class="note">セグメントを長くすると周波数分解能が上がり、平均回数が減ります。常時微動は長め、加振試験は短めが目安です。ゼロ位相は帯域端の減衰が2倍（−6 dB）になるため、通常はオフを推奨します。</p>
+    <button class="btn" id="reanalyze" style="margin-top:8px">この設定で再解析</button>
+  </div>
+</section>
+</div>
+
+<script>
+"use strict";
+// ================= 状態 =================
+const DEFAULT_CURVES = [
+  {name:"AIJ 2018 鉛直（要入力）",note:"日本建築学会『建築物の振動に関する居住性能評価規準・同解説』(2018) の鉛直性能評価曲線の折れ点を入力してください。",axis:"vertical",unit:"gal",quantity:"peak",
+   curves:[{name:"V-10",rank:1,points:[]},{name:"V-30",rank:2,points:[]},{name:"V-50",rank:3,points:[]},{name:"V-70",rank:4,points:[]},{name:"V-90",rank:5,points:[]}]},
+  {name:"AIJ 2004 鉛直（要入力）",note:"日本建築学会『建築物の振動に関する居住性能評価指針』(2004) の鉛直性能評価曲線の折れ点を入力してください。",axis:"vertical",unit:"gal",quantity:"peak",
+   curves:[{name:"V-0.75",rank:1,points:[]},{name:"V-1.5",rank:2,points:[]},{name:"V-3",rank:3,points:[]},{name:"V-5",rank:4,points:[]},{name:"V-10",rank:5,points:[]}]},
+  {name:"動作確認用ダミー（実在しない値）",note:"画面と判定の動作確認専用の架空の値です。実際の評価には使えません。",axis:"vertical",unit:"gal",quantity:"peak",
+   curves:[{name:"DUMMY-A",rank:1,points:[{f:3,a:0.5},{f:8,a:0.5},{f:30,a:1.9}]},
+           {name:"DUMMY-B",rank:2,points:[{f:3,a:1.5},{f:8,a:1.5},{f:30,a:5.6}]},
+           {name:"DUMMY-C",rank:3,points:[{f:3,a:5},{f:8,a:5},{f:30,a:19}]}]}
+];
+const S = {
+  rec:false, samples:[], axis:"z", view:"asd", result:null, lastEvent:0,
+  settings:{hp:0.3,trim:2,seg:1024,pmin:1,pmax:40,snr:6,zero:false},
+  noise:{}, curveSets:JSON.parse(JSON.stringify(DEFAULT_CURVES)), curveIdx:0, wake:null, startT:0
+};
+const AX = {x:1,y:2,z:3};
+const AXLABEL = {x:"水平X",y:"水平Y",z:"鉛直Z"};
+const $ = s => document.querySelector(s);
+const store = {
+  get(k,d){ try{ const v=localStorage.getItem("envvib:"+k); return v?JSON.parse(v):d; }catch(e){ return d; } },
+  set(k,v){ try{ localStorage.setItem("envvib:"+k, JSON.stringify(v)); }catch(e){} }
+};
+Object.assign(S.settings, store.get("settings", {}));
+S.noise = store.get("noise", {});
+S.curveSets = store.get("curves", S.curveSets);
+S.curveIdx = Math.min(store.get("curveIdx",0), S.curveSets.length-1);
+
+function setStatus(t, warn){ const e=$("#status"); e.textContent=t; e.className=warn?"warn":""; }
+
+// ================= 信号処理 =================
+function cdiv(ar,ai,br,bi){ const d=br*br+bi*bi; return [(ar*br+ai*bi)/d,(ai*br-ar*bi)/d]; }
+function csqrt(re,im){ const r=Math.hypot(re,im); const a=Math.sqrt(Math.max((r+re)/2,0)), b=Math.sqrt(Math.max((r-re)/2,0)); return [a, im>=0?b:-b]; }
+
+function biquadResp(s,f,fs){
+  const w=2*Math.PI*f/fs, c1=Math.cos(w), s1=-Math.sin(w), c2=Math.cos(2*w), s2=-Math.sin(2*w);
+  const nr=s.b0+s.b1*c1+s.b2*c2, ni=s.b1*s1+s.b2*s2;
+  const dr=1+s.a1*c1+s.a2*c2, di=s.a1*s1+s.a2*s2;
+  return Math.hypot(nr,ni)/Math.hypot(dr,di);
+}
+function cascadeMag(c,f,fs){ let m=c.gain; for(const s of c.secs) m*=biquadResp(s,f,fs); return m; }
+function runCascade(c,x){
+  let y=Float64Array.from(x);
+  for(const s of c.secs){
+    let z1=0,z2=0;
+    for(let i=0;i<y.length;i++){ const xi=y[i], yi=s.b0*xi+z1; z1=s.b1*xi-s.a1*yi+z2; z2=s.b2*xi-s.a2*yi; y[i]=yi; }
+  }
+  if(c.gain!==1) for(let i=0;i<y.length;i++) y[i]*=c.gain;
+  return y;
+}
+function filtfilt(c,x){ const f=runCascade(c,x).reverse(); return runCascade(c,f).reverse(); }
+
+function highpass2(f0,fs){
+  const w0=2*Math.PI*f0/fs, c=Math.cos(w0), al=Math.sin(w0)/(2*Math.SQRT1_2), a0=1+al;
+  return {gain:1,secs:[{b0:(1+c)/2/a0,b1:-(1+c)/a0,b2:(1+c)/2/a0,a1:-2*c/a0,a2:(1-al)/a0}]};
+}
+// 6次バターワース帯域通過（Swift版と同一の設計手順）
+function bandpass(f1,f2,fs){
+  const k=2*fs, w1=k*Math.tan(Math.PI*f1/fs), w2=k*Math.tan(Math.PI*f2/fs), w0sq=w1*w2, bw=w2-w1, n=3;
+  const secs=[];
+  for(let i=0;i<n;i++){
+    const th=Math.PI*(2*i+n+1)/(2*n), hr=Math.cos(th)*bw/2, hi=Math.sin(th)*bw/2;
+    const [sr,si]=csqrt(hr*hr-hi*hi-w0sq, 2*hr*hi);
+    for(const [a,b] of [[hr+sr,hi+si],[hr-sr,hi-si]]){
+      const [zr,zi]=cdiv(k+a,b,k-a,-b);
+      if(zi>1e-12) secs.push({b0:1,b1:0,b2:-1,a1:-2*zr,a2:zr*zr+zi*zi});
+    }
+  }
+  const c={secs,gain:1}, fcd=fs/Math.PI*Math.atan(Math.sqrt(w0sq)/k);
+  c.gain=1/cascadeMag(c,fcd,fs);
+  return c;
+}
+
+function detrend(x){
+  const n=x.length; let sx=0,sy=0,sxx=0,sxy=0;
+  for(let i=0;i<n;i++){ sx+=i; sy+=x[i]; sxx+=i*i; sxy+=i*x[i]; }
+  const sl=(n*sxy-sx*sy)/(n*sxx-sx*sx), ic=(sy-sl*sx)/n;
+  const y=new Float64Array(n); for(let i=0;i<n;i++) y[i]=x[i]-(ic+sl*i); return y;
+}
+function taper(x,fs,sec){
+  const m=Math.min(Math.floor(sec*fs),Math.floor(x.length/2)), y=Float64Array.from(x);
+  for(let i=0;i<m;i++){ const w=0.5-0.5*Math.cos(Math.PI*i/m); y[i]*=w; y[x.length-1-i]*=w; }
+  return y;
+}
+function hann(n){ const w=new Float64Array(n); for(let i=0;i<n;i++) w[i]=0.5-0.5*Math.cos(2*Math.PI*i/n); return w; }
+function nextPow2(n){ let p=16; while(p<n) p<<=1; return p; }
+function prevPow2(n){ let p=1; while(p*2<=n) p<<=1; return p; }
+function fft(re,im){
+  const n=re.length;
+  for(let i=1,j=0;i<n;i++){ let bit=n>>1; for(;j&bit;bit>>=1) j^=bit; j^=bit;
+    if(i<j){ let t=re[i]; re[i]=re[j]; re[j]=t; t=im[i]; im[i]=im[j]; im[j]=t; } }
+  for(let len=2;len<=n;len<<=1){
+    const h=len>>1, ang=-2*Math.PI/len;
+    for(let k=0;k<h;k++){
+      const wr=Math.cos(ang*k), wi=Math.sin(ang*k);
+      for(let i=0;i<n;i+=len){
+        const a=i+k, b=a+h, xr=re[b]*wr-im[b]*wi, xi=re[b]*wi+im[b]*wr;
+        re[b]=re[a]-xr; im[b]=im[a]-xi; re[a]+=xr; im[a]+=xi;
+      }
+    }
+  }
+}
+function amplitudeSpectrum(x,fs){
+  const w=hann(x.length); let sw=0; for(const v of w) sw+=v;
+  const n=nextPow2(x.length), re=new Float64Array(n), im=new Float64Array(n);
+  for(let i=0;i<x.length;i++) re[i]=x[i]*w[i];
+  fft(re,im);
+  const h=n/2, f=new Float64Array(h+1), a=new Float64Array(h+1);
+  for(let k=0;k<=h;k++){ f[k]=k*fs/n; a[k]=((k===0||k===h)?1:2)*Math.hypot(re[k],im[k])/sw; }
+  return {f,v:a};
+}
+function welchPSD(x,fs,seg){
+  const L=Math.min(seg,prevPow2(x.length)); if(L<16) return null;
+  const w=hann(L); let u=0; for(const v of w) u+=v*v;
+  const hop=L>>1, h=L/2, acc=new Float64Array(h+1), re=new Float64Array(L), im=new Float64Array(L);
+  let cnt=0;
+  for(let st=0;st+L<=x.length;st+=hop){
+    let m=0; for(let i=0;i<L;i++) m+=x[st+i]; m/=L;
+    for(let i=0;i<L;i++){ re[i]=(x[st+i]-m)*w[i]; im[i]=0; }
+    fft(re,im);
+    for(let k=0;k<=h;k++) acc[k]+=((k===0||k===h)?1:2)*(re[k]*re[k]+im[k]*im[k])/(fs*u);
+    cnt++;
+  }
+  const f=new Float64Array(h+1); for(let k=0;k<=h;k++){ f[k]=k*fs/L; acc[k]/=cnt; }
+  return {f,v:acc,segs:cnt};
+}
+function findPeaks(s,fmin,fmax,maxCount=5,sep=0.3){
+  const idx=[]; for(let i=0;i<s.f.length;i++) if(s.f[i]>=fmin&&s.f[i]<=fmax) idx.push(i);
+  if(idx.length<4) return [];
+  const sorted=idx.map(i=>s.v[i]).sort((a,b)=>a-b), med=sorted[sorted.length>>1];
+  const c=[];
+  for(let q=1;q<idx.length-1;q++){ const i=idx[q]; if(s.v[i]>s.v[i-1]&&s.v[i]>=s.v[i+1]&&s.v[i]>2*med) c.push(i); }
+  c.sort((a,b)=>s.v[b]-s.v[a]);
+  const p=[]; for(const i of c){ if(p.every(j=>Math.abs(s.f[j]-s.f[i])>=sep)) p.push(i); if(p.length>=maxCount) break; }
+  return p.sort((a,b)=>a-b);
+}
+function halfPower(s,p){
+  const tg=s.v[p]/2; let l=p,r=p;
+  while(l>0&&s.v[l]>tg) l--; while(r<s.v.length-1&&s.v[r]>tg) r++;
+  if(s.v[l]>tg||s.v[r]>tg||l>=p||r<=p) return null;
+  const cr=(i,j)=>{ const v0=s.v[i],v1=s.v[j]; return v1===v0?s.f[i]:s.f[i]+(tg-v0)*(s.f[j]-s.f[i])/(v1-v0); };
+  const fL=cr(l,l+1), fR=cr(r,r-1), df=s.f[1]-s.f[0];
+  return {h:(fR-fL)/(2*s.f[p]), rel:(fR-fL)/df>=5};
+}
+const NOMINAL={0:1,1:1.25,2:1.6,3:2,4:2.5,5:3.15,6:4,7:5,8:6.3,9:8,10:10,11:12.5,12:16,13:20,14:25,15:31.5};
+function thirdOctave(x,fs,zero){
+  const out=[];
+  for(let n=0;n<=15;n++){
+    const c=Math.pow(10,n/10), lo=c*Math.pow(10,-0.05), hi=c*Math.pow(10,0.05);
+    if(hi>=0.49*fs) continue;
+    const bp=bandpass(lo,hi,fs), y=zero?filtfilt(bp,x):runCascade(bp,x);
+    let pk=0,ss=0; for(const v of y){ const a=Math.abs(v); if(a>pk) pk=a; ss+=v*v; }
+    out.push({id:n,nominal:NOMINAL[n],peak:pk,rms:Math.sqrt(ss/y.length)});
+  }
+  return out;
+}
+function logDecimate(f,v,fmin,fmax,maxP){
+  const xs=[],ys=[]; let bin=-1,bx=0,by=-1;
+  const l0=Math.log10(fmin), l1=Math.log10(fmax);
+  for(let i=0;i<f.length;i++){
+    if(f[i]<fmin||f[i]>fmax||!(v[i]>0)) continue;
+    const b=Math.floor(maxP*(Math.log10(f[i])-l0)/(l1-l0));
+    if(b!==bin){ if(by>0){xs.push(bx);ys.push(by);} bin=b; bx=f[i]; by=v[i]; }
+    else if(v[i]>by){ bx=f[i]; by=v[i]; }
+  }
+  if(by>0){xs.push(bx);ys.push(by);}
+  return {x:xs,y:ys};
+}
+
+// ================= 計測 =================
+function measuredRate(s){ if(s.length<3) return null; const d=s[s.length-1][0]-s[0][0]; return d>0?(s.length-1)/d:null; }
+function resample(s,fs){
+  const t0=s[0][0], t1=s[s.length-1][0], n=Math.floor((t1-t0)*fs)+1;
+  const o=[new Float64Array(n),new Float64Array(n),new Float64Array(n)]; let j=0;
+  for(let i=0;i<n;i++){
+    const t=t0+i/fs; while(j<s.length-2&&s[j+1][0]<t) j++;
+    const a=s[j], b=s[j+1], dt=b[0]-a[0], r=dt>0?Math.min(Math.max((t-a[0])/dt,0),1):0;
+    for(let k=0;k<3;k++) o[k][i]=a[k+1]+(b[k+1]-a[k+1])*r;
+  }
+  return o;
+}
+function onMotion(e){
+  const a=e.accelerationIncludingGravity;
+  if(!a||a.z==null) return;
+  S.samples.push([e.timeStamp/1000,a.x,a.y,a.z]);
+  S.lastEvent=performance.now();
+}
+async function startRec(){
+  if(typeof DeviceMotionEvent==="undefined"){ setStatus("このブラウザは加速度センサーに対応していません。iPhone/iPadのSafariで開いてください。",true); return; }
+  try{
+    if(typeof DeviceMotionEvent.requestPermission==="function"){
+      const r=await DeviceMotionEvent.requestPermission();
+      if(r!=="granted"){ setStatus("モーションセンサーへのアクセスが許可されませんでした。",true); return; }
+    }
+  }catch(err){ setStatus("センサーの許可を求められませんでした。ページをSafariで直接開いてください。",true); return; }
+  S.samples=[]; S.rec=true; S.startT=performance.now(); S.lastEvent=0;
+  window.addEventListener("devicemotion",onMotion);
+  try{ if(navigator.wakeLock) S.wake=await navigator.wakeLock.request("screen"); }catch(e){}
+  $("#recBtn").textContent="測定停止"; $("#recBtn").classList.add("rec");
+  setStatus("測定中：端末に触れないでください。");
+  setTimeout(()=>{ if(S.rec&&S.samples.length===0) setStatus("センサーの値が届きません。このページをSafariで直接開くと動く場合があります。",true); },2500);
+  requestAnimationFrame(liveLoop);
+}
+function stopRec(){
+  window.removeEventListener("devicemotion",onMotion);
+  S.rec=false;
+  try{ if(S.wake){ S.wake.release(); S.wake=null; } }catch(e){}
+  $("#recBtn").textContent="測定開始"; $("#recBtn").classList.remove("rec");
+  analyze();
+}
+$("#recBtn").addEventListener("click",()=>{ S.rec?stopRec():startRec(); });
+
+function liveLoop(){
+  drawLive();
+  if(S.rec) requestAnimationFrame(liveLoop);
+}
+function drawLive(){
+  const s=S.samples, el=(performance.now()-S.startT)/1000;
+  if(S.rec){ $("#st-time .v").textContent=el.toFixed(0)+" s"; }
+  $("#st-n .v").textContent=s.length;
+  if(s.length<10) return;
+  const tEnd=s[s.length-1][0]; let i0=s.length-1; while(i0>0&&s[i0-1][0]>=tEnd-10) i0--;
+  const rec=s.slice(i0), k=AX[S.axis];
+  let m=0; for(const r of rec) m+=r[k]; m/=rec.length;
+  const step=Math.max(1,Math.floor(rec.length/600)), xs=[], ys=[];
+  for(let i=0;i<rec.length;i+=step){ xs.push(rec[i][0]-(tEnd-10)); ys.push((rec[i][k]-m)*100); }
+  plot($("#live"),{series:[{x:xs,y:ys,color:cssv("--accent"),width:1}],xr:[0,10],xlabel:"時間 [s]",ylabel:"gal"});
+  const last=s.slice(Math.max(0,s.length-60)); let mx=0,my=0,mz=0;
+  for(const r of last){ mx+=r[1]; my+=r[2]; mz+=r[3]; }
+  const g=Math.hypot(mx,my,mz), tilt=g>0?Math.acos(Math.min(1,Math.abs(mz)/g))*180/Math.PI:0;
+  $("#st-tilt .v").textContent=tilt.toFixed(1)+"°"; $("#st-tilt").classList.toggle("bad",tilt>3);
+  const rate=measuredRate(rec);
+  if(rate){ $("#st-rate .v").textContent=rate.toFixed(0)+" Hz"; $("#st-rate").classList.toggle("bad",rate<40); }
+}
+
+// ================= 解析 =================
+function analyze(){
+  const s=S.samples;
+  if(s.length<200){ setStatus("記録が短すぎます。10秒以上測定してください。",true); return; }
+  const rate=measuredRate(s), fs=Math.max(20,Math.round(rate));
+  const rs=resample(s,fs); let x=rs[AX[S.axis]-1];
+  const trim=Math.floor(S.settings.trim*fs);
+  if(x.length>2*trim+4*fs) x=x.slice(trim,x.length-trim);
+  x=detrend(x);
+  if(S.settings.hp>0) x=filtfilt(highpass2(S.settings.hp,fs),x);
+  const tp=taper(x,fs,0.5);
+  const amp=amplitudeSpectrum(tp,fs), psd=welchPSD(x,fs,S.settings.seg);
+  const peaks=[];
+  if(psd) for(const i of findPeaks(psd,S.settings.pmin,Math.min(S.settings.pmax,fs/2))){
+    const f=psd.f[i], hp=halfPower(psd,i), ai=Math.round(f/(amp.f[1]-amp.f[0]));
+    peaks.push({f,asd:Math.sqrt(psd.v[i])*100,amp:amp.v[ai]*100,h:hp?hp.h:null,rel:hp?hp.rel:false});
+  }
+  let gap=0; for(let i=1;i<s.length;i++) gap=Math.max(gap,s[i][0]-s[i-1][0]);
+  S.result={fs,dur:x.length/fs,rate,gap,amp,psd,peaks,oct:thirdOctave(tp,fs,S.settings.zero),axis:S.axis};
+  setStatus("解析完了（"+AXLABEL[S.axis]+"）。「結果」「評価」タブを確認してください。");
+  renderAll();
+}
+
+// ================= 描画 =================
+function cssv(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function fmtTick(v){ if(v===0) return "0"; const a=Math.abs(v); if(a>=1000||a<0.001) return v.toExponential(0); return String(+v.toPrecision(2)); }
+function niceStep(r){ const e=Math.pow(10,Math.floor(Math.log10(r))), f=r/e; return (f<1.5?1:f<3?2:f<7?5:10)*e; }
+function plot(cv,o){
+  const dpr=window.devicePixelRatio||1, W=cv.clientWidth, H=cv.clientHeight;
+  cv.width=W*dpr; cv.height=H*dpr;
+  const g=cv.getContext("2d"); g.setTransform(dpr,0,0,dpr,0,0); g.clearRect(0,0,W,H);
+  const ink=cssv("--ink"), muted=cssv("--muted"), line=cssv("--line");
+  const L=50,R=10,T=12,B=34, pw=W-L-R, ph=H-T-B;
+  const xs=[],ys=[];
+  for(const s of o.series) for(let i=0;i<s.x.length;i++){
+    if(o.xlog&&!(s.x[i]>0)) continue; if(o.ylog&&!(s.y[i]>0)) continue;
+    xs.push(s.x[i]); ys.push(s.y[i]);
+  }
+  if(!ys.length) return;
+  let [x0,x1]=o.xr||[Math.min(...xs),Math.max(...xs)], y0, y1;
+  let ymn=Infinity,ymx=-Infinity; for(const v of ys){ if(v<ymn) ymn=v; if(v>ymx) ymx=v; }
+  if(o.ylog){ y0=Math.pow(10,Math.floor(Math.log10(ymn))); y1=Math.pow(10,Math.ceil(Math.log10(ymx))); if(y1<=y0) y1=y0*10; }
+  else { const m=Math.max(Math.abs(ymn),Math.abs(ymx))||1; y0=-m*1.1; y1=m*1.1; }
+  const lx=Math.log10, tx=v=>L+(o.xlog?(lx(v)-lx(x0))/(lx(x1)-lx(x0)):(v-x0)/(x1-x0))*pw;
+  const ty=v=>T+ph-(o.ylog?(lx(v)-lx(y0))/(lx(y1)-lx(y0)):(v-y0)/(y1-y0))*ph;
+  g.font="11px -apple-system,system-ui,sans-serif"; g.lineWidth=1;
+  // X目盛
+  const xt=[];
+  if(o.xlog){ for(let d=Math.floor(lx(x0));d<=Math.ceil(lx(x1));d++) for(const m of [1,2,5]){ const v=m*Math.pow(10,d); if(v>=x0*0.999&&v<=x1*1.001) xt.push(v); } }
+  else { const st=niceStep((x1-x0)/5); for(let v=Math.ceil(x0/st)*st;v<=x1+1e-9;v+=st) xt.push(v); }
+  g.textAlign="center"; g.textBaseline="top";
+  for(const v of xt){ const X=tx(v); g.strokeStyle=line; g.beginPath(); g.moveTo(X,T); g.lineTo(X,T+ph); g.stroke(); g.fillStyle=muted; g.fillText(fmtTick(v),X,T+ph+4); }
+  // Y目盛
+  const yt=[];
+  if(o.ylog){ const dec=Math.round(lx(y1)-lx(y0)); const ms=dec>3?[1]:[1,2,5];
+    for(let d=Math.floor(lx(y0));d<=Math.ceil(lx(y1));d++) for(const m of ms){ const v=m*Math.pow(10,d); if(v>=y0*0.999&&v<=y1*1.001) yt.push(v); } }
+  else { const st=niceStep((y1-y0)/5); for(let v=Math.ceil(y0/st)*st;v<=y1+1e-9;v+=st) yt.push(Math.abs(v)<st*1e-6?0:v); }
+  g.textAlign="right"; g.textBaseline="middle";
+  for(const v of yt){ const Y=ty(v); g.strokeStyle=line; g.beginPath(); g.moveTo(L,Y); g.lineTo(L+pw,Y); g.stroke(); g.fillStyle=muted; g.fillText(fmtTick(v),L-5,Y); }
+  g.strokeStyle=muted; g.strokeRect(L,T,pw,ph);
+  // 系列
+  g.save(); g.beginPath(); g.rect(L,T,pw,ph); g.clip();
+  for(const s of o.series){
+    g.strokeStyle=s.color; g.lineWidth=s.width||1.2; g.setLineDash(s.dash||[]);
+    g.beginPath(); let first=true;
+    for(let i=0;i<s.x.length;i++){
+      if(o.xlog&&!(s.x[i]>0)) continue; if(o.ylog&&!(s.y[i]>0)) continue;
+      const X=tx(s.x[i]), Y=ty(s.y[i]); if(first){ g.moveTo(X,Y); first=false; } else g.lineTo(X,Y);
+    }
+    g.stroke(); g.setLineDash([]);
+    if(s.points){ g.fillStyle=s.color; for(let i=0;i<s.x.length;i++){ if(!(s.y[i]>0)&&o.ylog) continue; g.beginPath(); g.arc(tx(s.x[i]),ty(s.y[i]),3,0,2*Math.PI); g.fill(); } }
+  }
+  if(o.markers){ g.strokeStyle=cssv("--warn"); g.fillStyle=cssv("--warn"); g.setLineDash([4,3]); g.textAlign="left"; g.textBaseline="top";
+    for(const f of o.markers){ if(f<x0||f>x1) continue; const X=tx(f); g.beginPath(); g.moveTo(X,T); g.lineTo(X,T+ph); g.stroke(); g.fillText(f.toFixed(2),X+3,T+2); }
+    g.setLineDash([]); }
+  g.restore();
+  g.fillStyle=muted; g.textAlign="center"; g.textBaseline="bottom"; g.fillText(o.xlabel||"",L+pw/2,H);
+  g.save(); g.translate(11,T+ph/2); g.rotate(-Math.PI/2); g.textBaseline="middle"; g.fillText(o.ylabel||"",0,0); g.restore();
+}
+const CURVE_COLORS=["#2B7A4B","#7A8F2B","#B08A1E","#B4611B","#A23B3B","#7A3F8F"];
+
+function renderAll(){ renderResult(); renderEval(); renderSuggest(); }
+function renderResult(){
+  const r=S.result;
+  $("#noResult").hidden=!!r; $("#resultBody").hidden=!r;
+  if(!r) return;
+  const accent=cssv("--accent"), noiseC=cssv("--noise"), nz=S.noise[r.axis];
+  const fmax=r.fs/2, series=[], leg=[];
+  if(S.view==="asd"&&r.psd){
+    const d=logDecimate(r.psd.f,Array.from(r.psd.v,v=>Math.sqrt(v)*100),0.5,fmax,700);
+    series.push({x:d.x,y:d.y,color:accent,width:1.4}); leg.push(["測定",accent]);
+    if(nz&&nz.psd){ const n=logDecimate(nz.psd.f,nz.psd.v.map(v=>Math.sqrt(v)*100),0.5,fmax,700); series.unshift({x:n.x,y:n.y,color:noiseC,width:1.2}); leg.push(["自己ノイズ",noiseC]); }
+    plot($("#chart"),{series,xlog:true,ylog:true,xr:[0.5,fmax],xlabel:"周波数 [Hz]",ylabel:"gal/√Hz",markers:r.peaks.map(p=>p.f)});
+  } else if(S.view==="amp"){
+    const d=logDecimate(r.amp.f,Array.from(r.amp.v,v=>v*100),0.5,fmax,900);
+    series.push({x:d.x,y:d.y,color:accent,width:1}); leg.push(["フーリエ振幅",accent]);
+    plot($("#chart"),{series,xlog:true,ylog:true,xr:[0.5,fmax],xlabel:"周波数 [Hz]",ylabel:"gal",markers:r.peaks.map(p=>p.f)});
+  } else {
+    const set=S.curveSets[S.curveIdx]||{}, useR=set.quantity==="rms", toGal=set.unit==="m/s2"?100:1;
+    (set.curves||[]).filter(c=>c.points&&c.points.length).sort((a,b)=>a.rank-b.rank).forEach((c,i)=>{
+      const p=[...c.points].sort((a,b)=>a.f-b.f), col=CURVE_COLORS[i%CURVE_COLORS.length];
+      series.push({x:p.map(q=>q.f),y:p.map(q=>q.a*toGal),color:col,width:1,dash:[5,4]}); leg.push([c.name,col]);
+    });
+    if(nz&&nz.oct){ series.push({x:nz.oct.map(b=>b.nominal),y:nz.oct.map(b=>(useR?b.rms:b.peak)*100),color:noiseC,width:1.2,points:true}); leg.push(["自己ノイズ",noiseC]); }
+    series.push({x:r.oct.map(b=>b.nominal),y:r.oct.map(b=>(useR?b.rms:b.peak)*100),color:accent,width:2,points:true});
+    leg.push(["測定（"+(useR?"実効値":"最大値")+"）",accent]);
+    plot($("#chart"),{series,xlog:true,ylog:true,xr:[0.8,40],xlabel:"1/3オクターブバンド中心周波数 [Hz]",ylabel:"gal"});
+  }
+  $("#legend").innerHTML=leg.map(([n,c])=>`<span><i style="background:${c}"></i>${esc(n)}</span>`).join("");
+  let info=`${AXLABEL[r.axis]}／解析長 ${r.dur.toFixed(1)} s／実測 ${r.rate.toFixed(1)} Hz（${r.fs} Hzで再サンプリング）`;
+  if(r.psd) info+=`／Welch Δf = ${(r.psd.f[1]).toFixed(3)} Hz（${r.psd.segs} 回平均）`;
+  if(r.gap>3/r.fs) info+=`／注意：最大 ${(r.gap*1000).toFixed(0)} ms の取りこぼし`;
+  $("#info").textContent=info;
+  const t=$("#peaks");
+  if(!r.peaks.length){ t.innerHTML=""; $("#peakNote").textContent="明瞭なピークは見つかりませんでした。記録を長くするか、加振して測定してください。"; }
+  else {
+    t.innerHTML="<tr><th>振動数</th><th>フーリエ振幅</th><th>減衰定数 h</th></tr>"+r.peaks.map(p=>
+      `<tr><td><b>${p.f.toFixed(2)} Hz</b></td><td>${p.amp.toFixed(3)} gal</td><td class="${p.rel?"":"dim"}">${p.h==null?"–":(p.h*100).toFixed(1)+"%"}</td></tr>`).join("");
+    $("#peakNote").textContent="減衰定数は半パワー法（常時微動向け）です。灰色は周波数分解能が不足しています。ヒールドロップなど自由減衰波形では過小評価になるため参考値としてください。";
+  }
+  $("#clearNoise").hidden=!nz;
+}
+function esc(s){ return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+
+// ================= 評価 =================
+function curveValue(c,f){
+  const p=[...c.points].sort((a,b)=>a.f-b.f);
+  if(!p.length||f<p[0].f||f>p[p.length-1].f) return null;
+  if(p.length===1) return p[0].a;
+  for(let i=0;i<p.length-1;i++) if(f>=p[i].f&&f<=p[i+1].f){
+    const x0=Math.log10(p[i].f),x1=Math.log10(p[i+1].f),y0=Math.log10(p[i].a),y1=Math.log10(p[i+1].a);
+    const t=x1===x0?0:(Math.log10(f)-x0)/(x1-x0); return Math.pow(10,y0+t*(y1-y0));
+  }
+  return null;
+}
+function evaluate(oct,set,noise,snr){
+  const notes=[]; if(set.note) notes.push(set.note);
+  const curves=(set.curves||[]).filter(c=>c.points&&c.points.length).sort((a,b)=>a.rank-b.rank);
+  if(!curves.length){ notes.push("この評価基準には曲線データが入力されていません。下の「曲線データの編集」で原典の折れ点を入力してください。"); return {grade:null,curves:[],notes}; }
+  const useR=set.quantity==="rms", toSI=set.unit==="m/s2"?1:0.01, meas=b=>Math.max(useR?b.rms:b.peak,1e-12);
+  const nl=new Set();
+  if(noise) for(const b of oct){ const n=noise.find(q=>q.id===b.id); if(!n) continue; const nv=useR?n.rms:n.peak; if(nv>0&&20*Math.log10(meas(b)/nv)<snr) nl.add(b.id); }
+  const js=curves.map(c=>{
+    let mm=Infinity,lim=null; const fail=[];
+    for(const b of oct){ const v=curveValue(c,b.nominal); if(v==null) continue; const m=20*Math.log10(v*toSI/meas(b)); if(m<0) fail.push(b.id); if(m<mm){ mm=m; lim=b.nominal; } }
+    const has=isFinite(mm);
+    return {name:c.name,passed:has&&mm>=0,margin:has?mm:null,limiting:lim,onlyNoise:fail.length>0&&fail.every(i=>nl.has(i))};
+  });
+  const bi=js.findIndex(j=>j.passed);
+  if(bi>0&&js[bi-1].onlyNoise) notes.push(`${js[bi-1].name} を超えているのはノイズ支配バンドだけです。実際の振動はより小さく、より厳しいグレードを満たす可能性があります。`);
+  if(bi<0) notes.push("すべての曲線を超えています（最も緩い曲線より大きい振動）。");
+  if(!noise) notes.push("自己ノイズ基準が未登録のため、S/N判定は行っていません。");
+  else if(nl.size) notes.push(`ノイズ支配バンド（S/N < ${snr} dB）: `+oct.filter(b=>nl.has(b.id)).map(b=>b.nominal).join(", ")+" Hz");
+  return {grade:bi>=0?js[bi].name:null,margin:bi>=0?js[bi].margin:null,curves:js,notes};
+}
+function renderCurveSel(){
+  $("#curveSel").innerHTML=S.curveSets.map((c,i)=>`<option value="${i}">${esc(c.name)}</option>`).join("");
+  $("#curveSel").value=String(S.curveIdx);
+  $("#curveJson").value=JSON.stringify(S.curveSets,null,2);
+}
+function renderEval(){
+  const r=S.result, set=S.curveSets[S.curveIdx];
+  if(!r||!set){ $("#evalBody").innerHTML='<p class="note">測定後に表示されます。</p>'; return; }
+  const nz=S.noise[r.axis], e=evaluate(r.oct,set,nz?nz.oct:null,S.settings.snr);
+  let h="";
+  if(e.curves.length){
+    h+=`<div class="grade">${e.grade?esc(e.grade)+" 相当":"該当なし"}</div>`;
+    if(e.margin!=null) h+=`<p class="note" style="margin-top:0">余裕 ${e.margin.toFixed(1)} dB</p>`;
+    h+="<table><tr><th>曲線</th><th>最小余裕</th><th>支配バンド</th><th>判定</th></tr>"+e.curves.map(c=>
+      `<tr><td>${esc(c.name)}</td><td>${c.margin==null?"–":(c.margin>=0?"+":"")+c.margin.toFixed(1)+" dB"}</td><td>${c.limiting==null?"–":c.limiting+" Hz"}</td><td class="${c.passed?"pass":"fail"}">${c.passed?"適合":"超過"}</td></tr>`).join("")+"</table>";
+  }
+  h+=e.notes.map(n=>`<p class="note">${esc(n)}</p>`).join("");
+  h+=`<p class="note">評価軸：${AXLABEL[r.axis]}。鉛直の評価曲線は鉛直Zの測定に対して使ってください。</p>`;
+  $("#evalBody").innerHTML=h;
+}
+$("#curveSel").addEventListener("change",e=>{ S.curveIdx=+e.target.value; store.set("curveIdx",S.curveIdx); renderAll(); });
+$("#saveCurves").addEventListener("click",()=>{
+  try{
+    const v=JSON.parse($("#curveJson").value);
+    if(!Array.isArray(v)||!v.every(s=>s.name&&Array.isArray(s.curves))) throw new Error("配列の各要素に name と curves が必要です");
+    S.curveSets=v; S.curveIdx=Math.min(S.curveIdx,v.length-1); store.set("curves",v);
+    renderCurveSel(); renderAll(); $("#curveMsg").textContent="保存しました。";
+  }catch(err){ $("#curveMsg").textContent="JSONを読み取れません："+err.message; }
+});
+$("#resetCurves").addEventListener("click",()=>{
+  S.curveSets=JSON.parse(JSON.stringify(DEFAULT_CURVES)); S.curveIdx=0; store.set("curves",S.curveSets);
+  renderCurveSel(); renderAll(); $("#curveMsg").textContent="初期値に戻しました。";
+});
+
+// ================= 自己ノイズ =================
+$("#saveNoise").addEventListener("click",()=>{
+  const r=S.result; if(!r) return;
+  S.noise[r.axis]={oct:r.oct, psd:r.psd?{f:Array.from(r.psd.f),v:Array.from(r.psd.v)}:null};
+  store.set("noise",S.noise); setStatus(AXLABEL[r.axis]+" の自己ノイズ基準を登録しました。"); renderAll();
+});
+$("#clearNoise").addEventListener("click",()=>{
+  if(!S.result) return; delete S.noise[S.result.axis]; store.set("noise",S.noise); renderAll();
+});
+
+// ================= メトロノーム =================
+const M={bpm:120,on:false,ctx:null,next:0,beat:0,timer:null};
+function setBpm(b){
+  M.bpm=Math.max(30,Math.min(240,Math.round(b)));
+  $("#bpmN").textContent=M.bpm; $("#bpmR").value=M.bpm; $("#hz").textContent=(M.bpm/60).toFixed(2)+" Hz（1拍 "+(60/M.bpm).toFixed(3)+" s）";
+}
+function click(t,acc){
+  const o=M.ctx.createOscillator(), g=M.ctx.createGain();
+  o.frequency.value=acc?1600:1000;
+  g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.9,t+0.002); g.gain.exponentialRampToValueAtTime(0.0001,t+0.05);
+  o.connect(g).connect(M.ctx.destination); o.start(t); o.stop(t+0.06);
+}
+function sched(){
+  while(M.next<M.ctx.currentTime+0.12){
+    const acc=M.beat%4===0, d=Math.max(0,(M.next-M.ctx.currentTime)*1000);
+    click(M.next,acc);
+    setTimeout(()=>{ const b=$("#beat"); b.className=acc?"acc":"on"; setTimeout(()=>{ b.className=""; },90); },d);
+    M.next+=60/M.bpm; M.beat++;
+  }
+}
+$("#metBtn").addEventListener("click",()=>{
+  if(M.on){ clearInterval(M.timer); M.on=false; $("#metBtn").textContent="メトロノーム開始"; $("#metBtn").classList.remove("rec"); return; }
+  M.ctx=M.ctx||new (window.AudioContext||window.webkitAudioContext)(); M.ctx.resume();
+  M.next=M.ctx.currentTime+0.1; M.beat=0; M.timer=setInterval(sched,25); M.on=true;
+  $("#metBtn").textContent="メトロノーム停止"; $("#metBtn").classList.add("rec");
+});
+$("#bpmR").addEventListener("input",e=>setBpm(+e.target.value));
+document.querySelectorAll("[data-d]").forEach(b=>b.addEventListener("click",()=>setBpm(M.bpm+ +b.dataset.d)));
+function renderSuggest(){
+  const r=S.result, el=$("#suggest");
+  if(!r||!r.peaks.length){ el.innerHTML=""; return; }
+  const f=[...r.peaks].sort((a,b)=>b.asd-a.asd)[0].f, opts=[];
+  for(let n=1;n<=6;n++){ const h=f/n; if(h>=1.0&&h<=3.5) opts.push([n,h]); }
+  el.innerHTML=`<p class="note">最大ピーク ${f.toFixed(2)} Hz に合わせた人力加振のテンポ：</p><div class="chips">`+
+    (opts.length?opts.map(([n,h])=>`<button data-bpm="${(h*60).toFixed(1)}">${n===1?"f":"f/"+n} = ${h.toFixed(2)} Hz（${Math.round(h*60)} BPM）</button>`).join(""):'<span class="note">1〜3.5 Hzに入る分数調波がありません。</span>')+"</div>";
+  el.querySelectorAll("[data-bpm]").forEach(b=>b.addEventListener("click",()=>setBpm(+b.dataset.bpm)));
+}
+
+// ================= 設定・タブ =================
+const SET_IDS={hp:"s-hp",trim:"s-trim",seg:"s-seg",pmin:"s-pmin",pmax:"s-pmax",snr:"s-snr"};
+function loadSettingsUI(){ for(const [k,id] of Object.entries(SET_IDS)) $("#"+id).value=S.settings[k]; $("#s-zero").checked=S.settings.zero; }
+function readSettingsUI(){
+  for(const [k,id] of Object.entries(SET_IDS)){ const v=parseFloat($("#"+id).value); if(isFinite(v)) S.settings[k]=v; }
+  S.settings.seg=parseInt($("#s-seg").value,10); S.settings.zero=$("#s-zero").checked; store.set("settings",S.settings);
+}
+$("#reanalyze").addEventListener("click",()=>{ readSettingsUI(); if(S.samples.length) analyze(); else setStatus("設定を保存しました。"); });
+document.querySelectorAll("nav button").forEach(b=>b.addEventListener("click",()=>{
+  document.querySelectorAll("nav button").forEach(x=>x.setAttribute("aria-selected",x===b?"true":"false"));
+  document.querySelectorAll("section").forEach(s=>s.classList.toggle("on",s.id==="tab-"+b.dataset.tab));
+  if(b.dataset.tab==="result") requestAnimationFrame(renderResult);
+}));
+document.querySelectorAll("#axisSeg button").forEach(b=>b.addEventListener("click",()=>{
+  S.axis=b.dataset.axis;
+  document.querySelectorAll("#axisSeg button").forEach(x=>x.setAttribute("aria-pressed",x===b?"true":"false"));
+  if(!S.rec&&S.samples.length>=200) analyze(); else drawLive();
+}));
+document.querySelectorAll("#viewSeg button").forEach(b=>b.addEventListener("click",()=>{
+  S.view=b.dataset.view;
+  document.querySelectorAll("#viewSeg button").forEach(x=>x.setAttribute("aria-pressed",x===b?"true":"false"));
+  renderResult();
+}));
+window.addEventListener("resize",()=>{ if(S.result) renderResult(); drawLive(); });
+loadSettingsUI(); renderCurveSel(); setBpm(120);
+
+if("serviceWorker" in navigator){
+  window.addEventListener("load",()=>{ navigator.serviceWorker.register("sw.js").catch(()=>{}); });
+}
+</script>
+</body>
+</html>
