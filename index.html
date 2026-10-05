@@ -14,11 +14,11 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#EDF1F4" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#10171E" media="(prefers-color-scheme: dark)">
-
 <style>
 :root{
   --bg:#EDF1F4; --panel:#FFFFFF; --ink:#17232E; --muted:#5D6D7C; --line:#D3DBE2;
-  --accent:#1E6BAE; --accent-ink:#FFFFFF; --noise:#97A4B1; --warn:#B4461B; --ok:#2B7A4B; --rec:#C0392B;
+  --accent:#1E6BAE; --accent-ink:#FFFFFF; --warn:#B4461B; --ok:#2B7A4B; --rec:#C0392B;
+  --cx:#C9601F; --cy:#2E8A55; --cz:#1E6BAE;
   box-sizing:border-box;
   padding-top:env(safe-area-inset-top,0px);
   padding-bottom:env(safe-area-inset-bottom,0px);
@@ -26,12 +26,14 @@
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     --bg:#10171E; --panel:#17212B; --ink:#E3E9EF; --muted:#93A1AF; --line:#2A3845;
-    --accent:#5AA6E6; --accent-ink:#0C1620; --noise:#5F6D7B; --warn:#EE8B5E; --ok:#5DBE84; --rec:#E8665A;
+    --accent:#5AA6E6; --accent-ink:#0C1620; --warn:#EE8B5E; --ok:#5DBE84; --rec:#E8665A;
+    --cx:#F0915A; --cy:#5DC48A; --cz:#5AA6E6;
   }
 }
 :root[data-theme="dark"]{
   --bg:#10171E; --panel:#17212B; --ink:#E3E9EF; --muted:#93A1AF; --line:#2A3845;
-  --accent:#5AA6E6; --accent-ink:#0C1620; --noise:#5F6D7B; --warn:#EE8B5E; --ok:#5DBE84; --rec:#E8665A;
+  --accent:#5AA6E6; --accent-ink:#0C1620; --warn:#EE8B5E; --ok:#5DBE84; --rec:#E8665A;
+  --cx:#F0915A; --cy:#5DC48A; --cz:#5AA6E6;
 }
 *,*::before,*::after{box-sizing:inherit}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
@@ -43,45 +45,56 @@ header{padding:18px 0 8px}
 h1{font-size:1.35rem;margin:0;letter-spacing:.02em}
 #status{margin:4px 0 0;color:var(--muted);font-size:.92rem;min-height:1.4em}
 #status.warn{color:var(--warn)}
-nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding:8px 0;display:flex;gap:4px;overflow-x:auto}
-nav button{flex:1 0 auto;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:8px 12px;border-radius:8px;font:inherit;font-size:.9rem}
+nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding:8px 0;display:flex;gap:4px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+nav button{flex:0 0 auto;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:8px 12px;border-radius:8px;font:inherit;font-size:.88rem}
 nav button[aria-selected="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 section{display:none}
 section.on{display:block}
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:12px}
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-.stat .v{font-size:1.15rem;font-variant-numeric:tabular-nums;font-weight:600}
+.stat .v{font-size:1.1rem;font-variant-numeric:tabular-nums;font-weight:600}
 .stat .k{font-size:.75rem;color:var(--muted)}
 .stat.bad .v{color:var(--warn)}
 .seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-top:12px}
-.seg button{flex:1;border:0;background:var(--panel);color:var(--ink);padding:8px 4px;font:inherit;font-size:.88rem}
+.seg button{flex:1;border:0;background:var(--panel);color:var(--ink);padding:8px 4px;font:inherit;font-size:.86rem}
 .seg button+button{border-left:1px solid var(--line)}
 .seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.axtoggle{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.axtoggle button{font:inherit;font-size:.85rem;padding:5px 12px;border-radius:999px;border:1.5px solid var(--c);background:transparent;color:var(--c)}
+.axtoggle button[aria-pressed="true"]{background:var(--c);color:var(--panel)}
 canvas{width:100%;display:block}
-#live{height:170px}
-#chart{height:280px}
+#live{height:190px}
+#chart{height:290px}
 .legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:.78rem;color:var(--muted);margin-top:6px}
-.legend i{display:inline-block;width:14px;height:3px;vertical-align:middle;margin-right:5px;border-radius:2px}
+.legend i{display:inline-block;width:16px;height:0;border-top:3px solid;vertical-align:middle;margin-right:5px}
+.legend i.d{border-top-style:dashed;border-top-width:2px}
 .big{width:100%;margin-top:14px;padding:16px;font:inherit;font-size:1.1rem;font-weight:700;border:0;border-radius:12px;background:var(--accent);color:var(--accent-ink)}
 .big.rec{background:var(--rec);color:#fff}
+.big.armed{background:var(--warn);color:#fff}
 .btn{font:inherit;font-size:.88rem;padding:8px 12px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink)}
 .btn.danger{color:var(--warn)}
-.row{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.row{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;align-items:center}
 .note{font-size:.82rem;color:var(--muted);margin:8px 0 0}
 .note.warn{color:var(--warn)}
-table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:.92rem}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:.9rem}
 th,td{text-align:right;padding:6px 4px;border-bottom:1px solid var(--line)}
 th:first-child,td:first-child{text-align:left}
-th{font-weight:600;color:var(--muted);font-size:.8rem}
+th{font-weight:600;color:var(--muted);font-size:.78rem}
 td.dim{color:var(--muted)}
+.axname{font-weight:700}
 h2{font-size:1rem;margin:0 0 6px}
-.grade{font-size:1.7rem;font-weight:700;margin:6px 0 2px}
+h3{font-size:.95rem;margin:16px 0 4px}
+.grade{font-size:1.5rem;font-weight:700;margin:2px 0}
 .pass{color:var(--ok)} .fail{color:var(--warn)}
-select,input[type=number]{font:inherit;font-size:.95rem;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink)}
+select,input[type=number],input[type=text]{font:inherit;font-size:.95rem;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink)}
 label.f{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--line)}
-label.f:last-child{border-bottom:0}
+label.f:last-of-type{border-bottom:0}
+label.inline{display:flex;align-items:center;gap:6px;font-size:.9rem}
 textarea{width:100%;min-height:220px;font-family:ui-monospace,Menlo,monospace;font-size:.78rem;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);padding:8px}
 details summary{cursor:pointer;font-weight:600}
+.clock{font-size:2.2rem;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:.02em;text-align:center;margin:6px 0}
+.clock small{font-size:1.2rem;color:var(--muted)}
+.countdown{text-align:center;font-size:1.3rem;font-weight:700;font-variant-numeric:tabular-nums;margin-top:12px;min-height:1.6em}
 .bpm{display:flex;align-items:baseline;justify-content:center;gap:10px;margin:8px 0}
 .bpm .n{font-size:3.2rem;font-weight:700;font-variant-numeric:tabular-nums}
 .bpm .u{color:var(--muted)}
@@ -106,6 +119,7 @@ input[type=range]{width:100%;margin:12px 0}
   <button data-tab="measure" aria-selected="true">計測</button>
   <button data-tab="result">結果</button>
   <button data-tab="eval">評価</button>
+  <button data-tab="time">時刻・予約</button>
   <button data-tab="metro">メトロノーム</button>
   <button data-tab="settings">設定</button>
 </nav>
@@ -119,13 +133,11 @@ input[type=range]{width:100%;margin:12px 0}
       <div class="stat" id="st-time"><div class="v">0 s</div><div class="k">経過時間</div></div>
       <div class="stat" id="st-n"><div class="v">0</div><div class="k">データ点数</div></div>
     </div>
-    <div class="seg" id="axisSeg">
-      <button data-axis="x">水平X</button><button data-axis="y">水平Y</button><button data-axis="z" aria-pressed="true">鉛直Z</button>
-    </div>
+    <div class="axtoggle" data-target="live"></div>
     <canvas id="live" style="margin-top:10px"></canvas>
+    <div class="legend" id="liveLegend"></div>
     <button class="big" id="recBtn">測定開始</button>
-    <p class="note">ケースを外し、硬い床に画面を上にして置いてください。前後の数秒は操作の影響を避けるため解析から除外します。</p>
-    <p class="note">ブラウザ版のセンサー周期は約60 Hzのことが多く、1/3オクターブは25 Hz帯程度までになります。</p>
+    <p class="note">X・Y・Z の3方向を同時に記録します。ケースを外し、硬い床に画面を上にして置いてください。前後の数秒は操作の影響を避けるため解析から除外します。</p>
   </div>
 </section>
 
@@ -137,9 +149,15 @@ input[type=range]{width:100%;margin:12px 0}
       <div class="seg" id="viewSeg" style="margin-top:0">
         <button data-view="asd" aria-pressed="true">スペクトル密度</button><button data-view="amp">フーリエ振幅</button><button data-view="oct">1/3オクターブ</button>
       </div>
+      <div class="axtoggle" data-target="chart"></div>
+      <div class="seg" id="octCurveSeg" hidden>
+        <button data-oc="v" aria-pressed="true">鉛直の評価曲線</button><button data-oc="h">水平の評価曲線</button><button data-oc="none">曲線なし</button>
+      </div>
       <canvas id="chart" style="margin-top:10px"></canvas>
       <div class="legend" id="legend"></div>
       <p class="note" id="info"></p>
+      <div class="row"><button class="btn" id="csvBtn">CSVを保存・共有</button></div>
+      <p class="note">CSVには各サンプルの絶対時刻（UTCのミリ秒）と3軸の加速度が入ります。複数台のデータを時刻で突き合わせるのに使えます。</p>
     </div>
     <div class="panel">
       <h2>卓越振動数</h2>
@@ -148,7 +166,7 @@ input[type=range]{width:100%;margin:12px 0}
     </div>
     <div class="panel">
       <h2>自己ノイズ基準</h2>
-      <p class="note" style="margin-top:0">夜間など最も静かなときに硬い台の上で測定した結果を登録すると、スペクトルに重ねて表示し、S/Nが足りないバンドを評価で明示します。</p>
+      <p class="note" style="margin-top:0">夜間など最も静かなときに硬い台の上で測定した結果を登録すると、3方向それぞれのスペクトルに重ねて表示し、S/Nが足りないバンドを評価で明示します。</p>
       <div class="row">
         <button class="btn" id="saveNoise">この結果を自己ノイズとして登録</button>
         <button class="btn danger" id="clearNoise" hidden>ノイズ基準を削除</button>
@@ -161,13 +179,14 @@ input[type=range]{width:100%;margin:12px 0}
 <section id="tab-eval">
   <div class="panel">
     <h2>居住性能評価</h2>
-    <select id="curveSel" style="width:100%"></select>
+    <label class="f">鉛直（Z）の評価基準<select id="vSel"></select></label>
+    <label class="f">水平（X・Y）の評価基準<select id="hSel"></select></label>
     <div id="evalBody"><p class="note">測定後に表示されます。</p></div>
   </div>
   <div class="panel">
     <details>
       <summary>曲線データの編集</summary>
-      <p class="note">AIJ規準・指針の性能曲線の折れ点（f [Hz], a）を原典から入力してください。rank は厳しい曲線ほど小さくします。unit は gal または m/s2、quantity は peak（バンド最大値）または rms。</p>
+      <p class="note">AIJ規準・指針の性能曲線の折れ点（f [Hz], a）を原典から入力してください。axis は vertical（鉛直）または horizontal（水平）。rank は厳しい曲線ほど小さくします。unit は gal または m/s2、quantity は peak（バンド最大値）または rms。</p>
       <textarea id="curveJson" spellcheck="false"></textarea>
       <div class="row">
         <button class="btn" id="saveCurves">保存して反映</button>
@@ -175,6 +194,39 @@ input[type=range]{width:100%;margin:12px 0}
       </div>
       <p class="note" id="curveMsg"></p>
     </details>
+  </div>
+</section>
+
+<!-- 時刻・予約 -->
+<section id="tab-time">
+  <div class="panel">
+    <h2>端末の時刻</h2>
+    <div class="clock" id="clock">--:--:--<small>.---</small></div>
+    <p class="note" id="clockNote" style="text-align:center;margin-top:0">端末の時計を表示しています</p>
+    <div class="row">
+      <button class="btn" id="tcBtn">サーバー時刻と比べる</button>
+      <label class="inline"><input type="checkbox" id="useOff" disabled>ズレを補正して使う</label>
+    </div>
+    <p class="note" id="tcRes"></p>
+    <p class="note">iPhoneの「設定 → 一般 → 日付と時刻 → 自動設定」をオンにしておくと、端末の時計はネットワーク経由で自動的に合わせられます。</p>
+  </div>
+  <div class="panel">
+    <h2>予約計測</h2>
+    <label class="f">開始時刻（時:分:秒）<input type="text" id="schStart" inputmode="numeric" placeholder="14:30:00" size="9" autocomplete="off"></label>
+    <div class="row">
+      <button class="btn" data-quick="1">次のちょうど1分</button>
+      <button class="btn" data-quick="5">5分後のちょうど</button>
+      <button class="btn" data-quick="10">10分後のちょうど</button>
+    </div>
+    <label class="f">計測時間 [秒]<input type="number" id="schDur" min="5" max="3600" step="5" value="60"></label>
+    <button class="big" id="schBtn">この時刻で予約</button>
+    <div class="countdown" id="countdown"></div>
+    <p class="note warn">予約中は画面を消したり、他のアプリに切り替えたりしないでください。iPhoneはその間ページの動作を止めてしまいます。長く待つ場合は「設定 → 画面表示と明るさ → 自動ロック」を「なし」にしてください。</p>
+    <p class="note">複数台で同時に測るときは、全員が同じ開始時刻で予約し、開始直後に全員の近くで一度かかとを落とす（または床を軽く叩く）と、後でCSVの波形を重ねて正確に揃えられます。</p>
+  </div>
+  <div class="panel">
+    <h2>GPS による時刻同期について</h2>
+    <p class="note" style="margin-top:0">iPhoneはブラウザにもアプリにもGPS衛星の時刻を直接渡さないため、このアプリでは端末の時計（ネットワーク時刻で自動補正されたもの）を使います。必要に応じて「サーバー時刻と比べる」でズレを確かめ、補正できます。</p>
   </div>
 </section>
 
@@ -207,7 +259,7 @@ input[type=range]{width:100%;margin:12px 0}
     <label class="f">ピーク探索上限 [Hz]<input type="number" id="s-pmax" step="1" min="5" max="50"></label>
     <label class="f">ノイズ判定 S/N [dB]<input type="number" id="s-snr" step="1" min="0" max="20"></label>
     <label class="f">1/3オクターブをゼロ位相で計算<input type="checkbox" id="s-zero"></label>
-    <p class="note">セグメントを長くすると周波数分解能が上がり、平均回数が減ります。常時微動は長め、加振試験は短めが目安です。ゼロ位相は帯域端の減衰が2倍（−6 dB）になるため、通常はオフを推奨します。</p>
+    <p class="note">セグメントを長くすると周波数分解能が上がり、平均回数が減ります。常時微動は長め、加振試験は短めが目安です。ゼロ位相は帯域端の減衰が2倍（−6 dB）になるため、通常はオフを推奨します。予約計測では前後カットは適用しません。</p>
     <button class="btn" id="reanalyze" style="margin-top:8px">この設定で再解析</button>
   </div>
 </section>
@@ -215,35 +267,56 @@ input[type=range]{width:100%;margin:12px 0}
 
 <script>
 "use strict";
-// ================= 状態 =================
+// ================= 定数・状態 =================
+const AXES=["x","y","z"], AXI={x:1,y:2,z:3}, AXLABEL={x:"水平X",y:"水平Y",z:"鉛直Z"};
 const DEFAULT_CURVES = [
   {name:"AIJ 2018 鉛直（要入力）",note:"日本建築学会『建築物の振動に関する居住性能評価規準・同解説』(2018) の鉛直性能評価曲線の折れ点を入力してください。",axis:"vertical",unit:"gal",quantity:"peak",
    curves:[{name:"V-10",rank:1,points:[]},{name:"V-30",rank:2,points:[]},{name:"V-50",rank:3,points:[]},{name:"V-70",rank:4,points:[]},{name:"V-90",rank:5,points:[]}]},
   {name:"AIJ 2004 鉛直（要入力）",note:"日本建築学会『建築物の振動に関する居住性能評価指針』(2004) の鉛直性能評価曲線の折れ点を入力してください。",axis:"vertical",unit:"gal",quantity:"peak",
    curves:[{name:"V-0.75",rank:1,points:[]},{name:"V-1.5",rank:2,points:[]},{name:"V-3",rank:3,points:[]},{name:"V-5",rank:4,points:[]},{name:"V-10",rank:5,points:[]}]},
-  {name:"動作確認用ダミー（実在しない値）",note:"画面と判定の動作確認専用の架空の値です。実際の評価には使えません。",axis:"vertical",unit:"gal",quantity:"peak",
+  {name:"AIJ 水平（要入力）",note:"日本建築学会の規準・指針の水平性能評価曲線の折れ点を入力してください。曲線名は原典に合わせて変更してください。",axis:"horizontal",unit:"gal",quantity:"peak",
+   curves:[{name:"H-10",rank:1,points:[]},{name:"H-30",rank:2,points:[]},{name:"H-50",rank:3,points:[]},{name:"H-70",rank:4,points:[]},{name:"H-90",rank:5,points:[]}]},
+  {name:"動作確認用ダミー鉛直（実在しない値）",note:"画面と判定の動作確認専用の架空の値です。実際の評価には使えません。",axis:"vertical",unit:"gal",quantity:"peak",
    curves:[{name:"DUMMY-A",rank:1,points:[{f:3,a:0.5},{f:8,a:0.5},{f:30,a:1.9}]},
            {name:"DUMMY-B",rank:2,points:[{f:3,a:1.5},{f:8,a:1.5},{f:30,a:5.6}]},
-           {name:"DUMMY-C",rank:3,points:[{f:3,a:5},{f:8,a:5},{f:30,a:19}]}]}
+           {name:"DUMMY-C",rank:3,points:[{f:3,a:5},{f:8,a:5},{f:30,a:19}]}]},
+  {name:"動作確認用ダミー水平（実在しない値）",note:"画面と判定の動作確認専用の架空の値です。実際の評価には使えません。",axis:"horizontal",unit:"gal",quantity:"peak",
+   curves:[{name:"DUMMY-H1",rank:1,points:[{f:1,a:0.5},{f:2,a:0.5},{f:30,a:7.5}]},
+           {name:"DUMMY-H2",rank:2,points:[{f:1,a:1.5},{f:2,a:1.5},{f:30,a:22}]}]}
 ];
-const S = {
-  rec:false, samples:[], axis:"z", view:"asd", result:null, lastEvent:0,
-  settings:{hp:0.3,trim:2,seg:1024,pmin:1,pmax:40,snr:6,zero:false},
-  noise:{}, curveSets:JSON.parse(JSON.stringify(DEFAULT_CURVES)), curveIdx:0, wake:null, startT:0
-};
-const AX = {x:1,y:2,z:3};
-const AXLABEL = {x:"水平X",y:"水平Y",z:"鉛直Z"};
 const $ = s => document.querySelector(s);
 const store = {
   get(k,d){ try{ const v=localStorage.getItem("envvib:"+k); return v?JSON.parse(v):d; }catch(e){ return d; } },
   set(k,v){ try{ localStorage.setItem("envvib:"+k, JSON.stringify(v)); }catch(e){} }
 };
+const S = {
+  rec:false, armed:false, sched:null, stopping:false, samples:[], ref:null, vec:null,
+  eventCount:0, startPerf:0, wake:null, result:null,
+  view:"asd", octCurves:"v", show:{x:true,y:true,z:true}, liveShow:{x:true,y:true,z:true},
+  settings:{hp:0.3,trim:2,seg:1024,pmin:1,pmax:40,snr:6,zero:false},
+  noise:{}, curveSets:null, vIdx:0, hIdx:0,
+  offset:0, offsetErr:null, useOffset:false
+};
 Object.assign(S.settings, store.get("settings", {}));
 S.noise = store.get("noise", {});
-S.curveSets = store.get("curves", S.curveSets);
-S.curveIdx = Math.min(store.get("curveIdx",0), S.curveSets.length-1);
+(function loadCurves(){
+  let cs=store.get("curves", null);
+  if(!Array.isArray(cs)) cs=JSON.parse(JSON.stringify(DEFAULT_CURVES));
+  // 旧版の保存データに水平の基準がなければ追加する
+  if(!cs.some(c=>c.axis==="horizontal")) cs=cs.concat(JSON.parse(JSON.stringify(DEFAULT_CURVES.filter(c=>c.axis==="horizontal"))));
+  S.curveSets=cs;
+  S.vIdx=store.get("vIdx", cs.findIndex(c=>c.axis!=="horizontal"));
+  S.hIdx=store.get("hIdx", cs.findIndex(c=>c.axis==="horizontal"));
+})();
 
-function setStatus(t, warn){ const e=$("#status"); e.textContent=t; e.className=warn?"warn":""; }
+function setStatus(t,warn){ const e=$("#status"); e.textContent=t; e.className=warn?"warn":""; }
+function esc(s){ return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function cssv(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function axColor(a){ return cssv("--c"+a); }
+const pad=(n,w=2)=>String(n).padStart(w,"0");
+function fmtClock(ms){ const d=new Date(ms); return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}.${pad(d.getMilliseconds(),3)}`; }
+function fmtDateTime(ms){ const d=new Date(ms); return `${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())} ${fmtClock(ms)}`; }
+function nowCorr(){ return Date.now()+(S.useOffset?S.offset:0); }
 
 // ================= 信号処理 =================
 function cdiv(ar,ai,br,bi){ const d=br*br+bi*bi; return [(ar*br+ai*bi)/d,(ai*br-ar*bi)/d]; }
@@ -384,8 +457,98 @@ function logDecimate(f,v,fmin,fmax,maxP){
   return {x:xs,y:ys};
 }
 
-// ================= 計測 =================
-function measuredRate(s){ if(s.length<3) return null; const d=s[s.length-1][0]-s[0][0]; return d>0?(s.length-1)/d:null; }
+// ================= センサー =================
+function eventEpoch(e){
+  const ts=e.timeStamp;
+  const base = ts>1e12 ? ts : S.ref.wall+(ts-S.ref.perf);
+  return base+(S.useOffset?S.offset:0);
+}
+function onMotion(e){
+  const a=e.accelerationIncludingGravity;
+  if(!a||a.z==null) return;
+  S.eventCount++; S.vec=[a.x,a.y,a.z];
+  const t=eventEpoch(e);
+  if(S.sched){
+    if(t<S.sched.start) return;
+    if(t>=S.sched.end){ if(!S.stopping){ S.stopping=true; setTimeout(stopRec,0); } return; }
+    if(!S.rec){ S.rec=true; S.startPerf=performance.now(); setStatus("予約計測中：端末に触れないでください。"); updateRecBtn(); }
+  }
+  S.samples.push([t,a.x,a.y,a.z]);
+}
+async function attachSensor(){
+  if(typeof DeviceMotionEvent==="undefined"){ setStatus("このブラウザは加速度センサーに対応していません。iPhone/iPadのSafariで開いてください。",true); return false; }
+  try{
+    if(typeof DeviceMotionEvent.requestPermission==="function"){
+      const r=await DeviceMotionEvent.requestPermission();
+      if(r!=="granted"){ setStatus("モーションセンサーへのアクセスが許可されませんでした。",true); return false; }
+    }
+  }catch(err){ setStatus("センサーの許可を求められませんでした。ページをSafariで直接開いてください。",true); return false; }
+  S.samples=[]; S.eventCount=0; S.stopping=false;
+  S.ref={wall:Date.now(), perf:performance.now()};
+  window.addEventListener("devicemotion",onMotion);
+  try{ if(navigator.wakeLock) S.wake=await navigator.wakeLock.request("screen"); }catch(e){}
+  setTimeout(()=>{ if((S.rec||S.armed)&&S.eventCount===0) setStatus("センサーの値が届きません。このページをSafariで直接開いてください。",true); },2500);
+  return true;
+}
+function detachSensor(){
+  window.removeEventListener("devicemotion",onMotion);
+  try{ if(S.wake){ S.wake.release(); S.wake=null; } }catch(e){}
+}
+async function startRec(){
+  if(!(await attachSensor())) return;
+  S.rec=true; S.startPerf=performance.now();
+  setStatus("測定中：端末に触れないでください。");
+  updateRecBtn(); requestAnimationFrame(liveLoop);
+}
+function stopRec(){
+  detachSensor();
+  const wasSched=!!S.sched;
+  S.rec=false; S.armed=false; S.sched=null; S.stopping=false;
+  updateRecBtn(); updateCountdown();
+  analyze(wasSched);
+}
+function cancelReserve(){
+  detachSensor(); S.armed=false; S.sched=null; S.rec=false; S.samples=[];
+  updateRecBtn(); updateCountdown(); setStatus("予約を取り消しました。");
+}
+function updateRecBtn(){
+  const b=$("#recBtn"), sb=$("#schBtn");
+  b.classList.remove("rec","armed"); sb.classList.remove("armed","rec");
+  if(S.rec){ b.textContent="測定停止"; b.classList.add("rec"); sb.textContent="計測中（押すと停止）"; sb.classList.add("rec"); }
+  else if(S.armed){ b.textContent="予約を取り消す"; b.classList.add("armed"); sb.textContent="予約を取り消す"; sb.classList.add("armed"); }
+  else { b.textContent="測定開始"; sb.textContent="この時刻で予約"; }
+}
+$("#recBtn").addEventListener("click",()=>{ if(S.rec) stopRec(); else if(S.armed) cancelReserve(); else startRec(); });
+
+// ================= ライブ表示 =================
+function liveLoop(){ drawLive(); if(S.rec||S.armed) requestAnimationFrame(liveLoop); }
+function drawLive(){
+  const s=S.samples;
+  $("#st-time .v").textContent=S.rec?((performance.now()-S.startPerf)/1000).toFixed(0)+" s":"0 s";
+  $("#st-n .v").textContent=s.length;
+  if(S.vec){
+    const [vx,vy,vz]=S.vec, g=Math.hypot(vx,vy,vz), tilt=g>0?Math.acos(Math.min(1,Math.abs(vz)/g))*180/Math.PI:0;
+    $("#st-tilt .v").textContent=tilt.toFixed(1)+"°"; $("#st-tilt").classList.toggle("bad",tilt>3);
+  }
+  if(s.length<10) return;
+  const tEnd=s[s.length-1][0]; let i0=s.length-1; while(i0>0&&s[i0-1][0]>=tEnd-10000) i0--;
+  const rec=s.slice(i0), step=Math.max(1,Math.floor(rec.length/600)), series=[];
+  for(const ax of AXES){
+    if(!S.liveShow[ax]) continue;
+    const k=AXI[ax]; let m=0; for(const r of rec) m+=r[k]; m/=rec.length;
+    const xs=[],ys=[]; for(let i=0;i<rec.length;i+=step){ xs.push((rec[i][0]-(tEnd-10000))/1000); ys.push((rec[i][k]-m)*100); }
+    series.push({x:xs,y:ys,color:axColor(ax),width:1});
+  }
+  if(series.length) plot($("#live"),{series,xr:[0,10],xlabel:"時間 [s]",ylabel:"gal"});
+  const rate=rec.length>2?(rec.length-1)/((rec[rec.length-1][0]-rec[0][0])/1000):null;
+  if(rate){ $("#st-rate .v").textContent=rate.toFixed(0)+" Hz"; $("#st-rate").classList.toggle("bad",rate<40); }
+}
+
+// ================= 解析 =================
+function resampleAbs(s,fs){
+  const t0=s[0][0], rel=s.map(r=>[(r[0]-t0)/1000,r[1],r[2],r[3]]);
+  return {t0, data:resample(rel,fs)};
+}
 function resample(s,fs){
   const t0=s[0][0], t1=s[s.length-1][0], n=Math.floor((t1-t0)*fs)+1;
   const o=[new Float64Array(n),new Float64Array(n),new Float64Array(n)]; let j=0;
@@ -396,183 +559,179 @@ function resample(s,fs){
   }
   return o;
 }
-function onMotion(e){
-  const a=e.accelerationIncludingGravity;
-  if(!a||a.z==null) return;
-  S.samples.push([e.timeStamp/1000,a.x,a.y,a.z]);
-  S.lastEvent=performance.now();
-}
-async function startRec(){
-  if(typeof DeviceMotionEvent==="undefined"){ setStatus("このブラウザは加速度センサーに対応していません。iPhone/iPadのSafariで開いてください。",true); return; }
-  try{
-    if(typeof DeviceMotionEvent.requestPermission==="function"){
-      const r=await DeviceMotionEvent.requestPermission();
-      if(r!=="granted"){ setStatus("モーションセンサーへのアクセスが許可されませんでした。",true); return; }
-    }
-  }catch(err){ setStatus("センサーの許可を求められませんでした。ページをSafariで直接開いてください。",true); return; }
-  S.samples=[]; S.rec=true; S.startT=performance.now(); S.lastEvent=0;
-  window.addEventListener("devicemotion",onMotion);
-  try{ if(navigator.wakeLock) S.wake=await navigator.wakeLock.request("screen"); }catch(e){}
-  $("#recBtn").textContent="測定停止"; $("#recBtn").classList.add("rec");
-  setStatus("測定中：端末に触れないでください。");
-  setTimeout(()=>{ if(S.rec&&S.samples.length===0) setStatus("センサーの値が届きません。このページをSafariで直接開くと動く場合があります。",true); },2500);
-  requestAnimationFrame(liveLoop);
-}
-function stopRec(){
-  window.removeEventListener("devicemotion",onMotion);
-  S.rec=false;
-  try{ if(S.wake){ S.wake.release(); S.wake=null; } }catch(e){}
-  $("#recBtn").textContent="測定開始"; $("#recBtn").classList.remove("rec");
-  analyze();
-}
-$("#recBtn").addEventListener("click",()=>{ S.rec?stopRec():startRec(); });
-
-function liveLoop(){
-  drawLive();
-  if(S.rec) requestAnimationFrame(liveLoop);
-}
-function drawLive(){
-  const s=S.samples, el=(performance.now()-S.startT)/1000;
-  if(S.rec){ $("#st-time .v").textContent=el.toFixed(0)+" s"; }
-  $("#st-n .v").textContent=s.length;
-  if(s.length<10) return;
-  const tEnd=s[s.length-1][0]; let i0=s.length-1; while(i0>0&&s[i0-1][0]>=tEnd-10) i0--;
-  const rec=s.slice(i0), k=AX[S.axis];
-  let m=0; for(const r of rec) m+=r[k]; m/=rec.length;
-  const step=Math.max(1,Math.floor(rec.length/600)), xs=[], ys=[];
-  for(let i=0;i<rec.length;i+=step){ xs.push(rec[i][0]-(tEnd-10)); ys.push((rec[i][k]-m)*100); }
-  plot($("#live"),{series:[{x:xs,y:ys,color:cssv("--accent"),width:1}],xr:[0,10],xlabel:"時間 [s]",ylabel:"gal"});
-  const last=s.slice(Math.max(0,s.length-60)); let mx=0,my=0,mz=0;
-  for(const r of last){ mx+=r[1]; my+=r[2]; mz+=r[3]; }
-  const g=Math.hypot(mx,my,mz), tilt=g>0?Math.acos(Math.min(1,Math.abs(mz)/g))*180/Math.PI:0;
-  $("#st-tilt .v").textContent=tilt.toFixed(1)+"°"; $("#st-tilt").classList.toggle("bad",tilt>3);
-  const rate=measuredRate(rec);
-  if(rate){ $("#st-rate .v").textContent=rate.toFixed(0)+" Hz"; $("#st-rate").classList.toggle("bad",rate<40); }
-}
-
-// ================= 解析 =================
-function analyze(){
+function analyze(wasSched){
   const s=S.samples;
   if(s.length<200){ setStatus("記録が短すぎます。10秒以上測定してください。",true); return; }
-  const rate=measuredRate(s), fs=Math.max(20,Math.round(rate));
-  const rs=resample(s,fs); let x=rs[AX[S.axis]-1];
-  const trim=Math.floor(S.settings.trim*fs);
-  if(x.length>2*trim+4*fs) x=x.slice(trim,x.length-trim);
-  x=detrend(x);
-  if(S.settings.hp>0) x=filtfilt(highpass2(S.settings.hp,fs),x);
-  const tp=taper(x,fs,0.5);
-  const amp=amplitudeSpectrum(tp,fs), psd=welchPSD(x,fs,S.settings.seg);
-  const peaks=[];
-  if(psd) for(const i of findPeaks(psd,S.settings.pmin,Math.min(S.settings.pmax,fs/2))){
-    const f=psd.f[i], hp=halfPower(psd,i), ai=Math.round(f/(amp.f[1]-amp.f[0]));
-    peaks.push({f,asd:Math.sqrt(psd.v[i])*100,amp:amp.v[ai]*100,h:hp?hp.h:null,rel:hp?hp.rel:false});
-  }
+  const dur=(s[s.length-1][0]-s[0][0])/1000, rate=(s.length-1)/dur, fs=Math.max(20,Math.round(rate));
+  const {t0,data}=resampleAbs(s,fs);
+  const trimSec=wasSched?0:S.settings.trim;
+  let trim=Math.floor(trimSec*fs); if(data[0].length<=2*trim+4*fs) trim=0;
   let gap=0; for(let i=1;i<s.length;i++) gap=Math.max(gap,s[i][0]-s[i-1][0]);
-  S.result={fs,dur:x.length/fs,rate,gap,amp,psd,peaks,oct:thirdOctave(tp,fs,S.settings.zero),axis:S.axis};
-  setStatus("解析完了（"+AXLABEL[S.axis]+"）。「結果」「評価」タブを確認してください。");
+  const axes={};
+  for(const ax of AXES){
+    let x=data[AXI[ax]-1];
+    if(trim>0) x=x.slice(trim,x.length-trim);
+    x=detrend(x);
+    if(S.settings.hp>0) x=filtfilt(highpass2(S.settings.hp,fs),x);
+    const tp=taper(x,fs,0.5), amp=amplitudeSpectrum(tp,fs), psd=welchPSD(x,fs,S.settings.seg), peaks=[];
+    if(psd) for(const i of findPeaks(psd,S.settings.pmin,Math.min(S.settings.pmax,fs/2))){
+      const f=psd.f[i], hp=halfPower(psd,i), dfa=amp.f[1]-amp.f[0], dfp=psd.f[1]-psd.f[0];
+      // PSDのピーク位置の前後（PSDの1ビン幅）でフーリエ振幅の最大値を探す
+      let am=0; for(let k=Math.max(0,Math.floor((f-dfp)/dfa));k<=Math.min(amp.v.length-1,Math.ceil((f+dfp)/dfa));k++) am=Math.max(am,amp.v[k]);
+      peaks.push({f,asd:Math.sqrt(psd.v[i])*100,amp:am*100,h:hp?hp.h:null,rel:hp?hp.rel:false});
+    }
+    axes[ax]={amp,psd,peaks,oct:thirdOctave(tp,fs,S.settings.zero),len:x.length};
+  }
+  S.result={fs,rate,gap,t0,startAnalysis:t0+trim*1000/fs,dur:axes.z.len/fs,raw:data,axes,offset:S.useOffset?S.offset:null,sched:!!wasSched};
+  setStatus("解析完了（3方向）。「結果」「評価」タブを確認してください。");
   renderAll();
 }
 
 // ================= 描画 =================
-function cssv(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
 function fmtTick(v){ if(v===0) return "0"; const a=Math.abs(v); if(a>=1000||a<0.001) return v.toExponential(0); return String(+v.toPrecision(2)); }
 function niceStep(r){ const e=Math.pow(10,Math.floor(Math.log10(r))), f=r/e; return (f<1.5?1:f<3?2:f<7?5:10)*e; }
 function plot(cv,o){
   const dpr=window.devicePixelRatio||1, W=cv.clientWidth, H=cv.clientHeight;
+  if(!W||!H) return;
   cv.width=W*dpr; cv.height=H*dpr;
   const g=cv.getContext("2d"); g.setTransform(dpr,0,0,dpr,0,0); g.clearRect(0,0,W,H);
-  const ink=cssv("--ink"), muted=cssv("--muted"), line=cssv("--line");
+  const muted=cssv("--muted"), line=cssv("--line");
   const L=50,R=10,T=12,B=34, pw=W-L-R, ph=H-T-B;
-  const xs=[],ys=[];
+  let ymn=Infinity,ymx=-Infinity,xmn=Infinity,xmx=-Infinity;
   for(const s of o.series) for(let i=0;i<s.x.length;i++){
     if(o.xlog&&!(s.x[i]>0)) continue; if(o.ylog&&!(s.y[i]>0)) continue;
-    xs.push(s.x[i]); ys.push(s.y[i]);
+    if(o.xr&&(s.x[i]<o.xr[0]||s.x[i]>o.xr[1])) continue;
+    const y=s.y[i]; if(y<ymn) ymn=y; if(y>ymx) ymx=y; if(s.x[i]<xmn) xmn=s.x[i]; if(s.x[i]>xmx) xmx=s.x[i];
   }
-  if(!ys.length) return;
-  let [x0,x1]=o.xr||[Math.min(...xs),Math.max(...xs)], y0, y1;
-  let ymn=Infinity,ymx=-Infinity; for(const v of ys){ if(v<ymn) ymn=v; if(v>ymx) ymx=v; }
+  if(!isFinite(ymn)) return;
+  const [x0,x1]=o.xr||[xmn,xmx]; let y0,y1;
   if(o.ylog){ y0=Math.pow(10,Math.floor(Math.log10(ymn))); y1=Math.pow(10,Math.ceil(Math.log10(ymx))); if(y1<=y0) y1=y0*10; }
   else { const m=Math.max(Math.abs(ymn),Math.abs(ymx))||1; y0=-m*1.1; y1=m*1.1; }
   const lx=Math.log10, tx=v=>L+(o.xlog?(lx(v)-lx(x0))/(lx(x1)-lx(x0)):(v-x0)/(x1-x0))*pw;
   const ty=v=>T+ph-(o.ylog?(lx(v)-lx(y0))/(lx(y1)-lx(y0)):(v-y0)/(y1-y0))*ph;
   g.font="11px -apple-system,system-ui,sans-serif"; g.lineWidth=1;
-  // X目盛
   const xt=[];
   if(o.xlog){ for(let d=Math.floor(lx(x0));d<=Math.ceil(lx(x1));d++) for(const m of [1,2,5]){ const v=m*Math.pow(10,d); if(v>=x0*0.999&&v<=x1*1.001) xt.push(v); } }
   else { const st=niceStep((x1-x0)/5); for(let v=Math.ceil(x0/st)*st;v<=x1+1e-9;v+=st) xt.push(v); }
   g.textAlign="center"; g.textBaseline="top";
   for(const v of xt){ const X=tx(v); g.strokeStyle=line; g.beginPath(); g.moveTo(X,T); g.lineTo(X,T+ph); g.stroke(); g.fillStyle=muted; g.fillText(fmtTick(v),X,T+ph+4); }
-  // Y目盛
   const yt=[];
-  if(o.ylog){ const dec=Math.round(lx(y1)-lx(y0)); const ms=dec>3?[1]:[1,2,5];
+  if(o.ylog){ const dec=Math.round(lx(y1)-lx(y0)), ms=dec>3?[1]:[1,2,5];
     for(let d=Math.floor(lx(y0));d<=Math.ceil(lx(y1));d++) for(const m of ms){ const v=m*Math.pow(10,d); if(v>=y0*0.999&&v<=y1*1.001) yt.push(v); } }
   else { const st=niceStep((y1-y0)/5); for(let v=Math.ceil(y0/st)*st;v<=y1+1e-9;v+=st) yt.push(Math.abs(v)<st*1e-6?0:v); }
   g.textAlign="right"; g.textBaseline="middle";
   for(const v of yt){ const Y=ty(v); g.strokeStyle=line; g.beginPath(); g.moveTo(L,Y); g.lineTo(L+pw,Y); g.stroke(); g.fillStyle=muted; g.fillText(fmtTick(v),L-5,Y); }
   g.strokeStyle=muted; g.strokeRect(L,T,pw,ph);
-  // 系列
   g.save(); g.beginPath(); g.rect(L,T,pw,ph); g.clip();
   for(const s of o.series){
-    g.strokeStyle=s.color; g.lineWidth=s.width||1.2; g.setLineDash(s.dash||[]);
+    g.strokeStyle=s.color; g.globalAlpha=s.alpha||1; g.lineWidth=s.width||1.2; g.setLineDash(s.dash||[]);
     g.beginPath(); let first=true;
     for(let i=0;i<s.x.length;i++){
       if(o.xlog&&!(s.x[i]>0)) continue; if(o.ylog&&!(s.y[i]>0)) continue;
       const X=tx(s.x[i]), Y=ty(s.y[i]); if(first){ g.moveTo(X,Y); first=false; } else g.lineTo(X,Y);
     }
     g.stroke(); g.setLineDash([]);
-    if(s.points){ g.fillStyle=s.color; for(let i=0;i<s.x.length;i++){ if(!(s.y[i]>0)&&o.ylog) continue; g.beginPath(); g.arc(tx(s.x[i]),ty(s.y[i]),3,0,2*Math.PI); g.fill(); } }
+    if(s.points){ g.fillStyle=s.color; for(let i=0;i<s.x.length;i++){ if(o.ylog&&!(s.y[i]>0)) continue; g.beginPath(); g.arc(tx(s.x[i]),ty(s.y[i]),3,0,2*Math.PI); g.fill(); } }
+    g.globalAlpha=1;
   }
-  if(o.markers){ g.strokeStyle=cssv("--warn"); g.fillStyle=cssv("--warn"); g.setLineDash([4,3]); g.textAlign="left"; g.textBaseline="top";
-    for(const f of o.markers){ if(f<x0||f>x1) continue; const X=tx(f); g.beginPath(); g.moveTo(X,T); g.lineTo(X,T+ph); g.stroke(); g.fillText(f.toFixed(2),X+3,T+2); }
+  if(o.markers){ g.setLineDash([4,3]); g.textAlign="left"; g.textBaseline="top";
+    o.markers.forEach((m,k)=>{ if(m.f<x0||m.f>x1) return; const X=tx(m.f); g.strokeStyle=m.color; g.fillStyle=m.color;
+      g.beginPath(); g.moveTo(X,T); g.lineTo(X,T+ph); g.stroke(); g.fillText(m.f.toFixed(2),X+3,T+2+(k%3)*12); });
     g.setLineDash([]); }
   g.restore();
   g.fillStyle=muted; g.textAlign="center"; g.textBaseline="bottom"; g.fillText(o.xlabel||"",L+pw/2,H);
   g.save(); g.translate(11,T+ph/2); g.rotate(-Math.PI/2); g.textBaseline="middle"; g.fillText(o.ylabel||"",0,0); g.restore();
 }
-const CURVE_COLORS=["#2B7A4B","#7A8F2B","#B08A1E","#B4611B","#A23B3B","#7A3F8F"];
+const CURVE_COLORS=["#6B7785","#8A8F5A","#A78A3C","#A8683E","#9B4C4C","#7A5A8F"];
 
+function buildAxisToggles(){
+  document.querySelectorAll(".axtoggle").forEach(box=>{
+    const target=box.dataset.target, st=target==="live"?S.liveShow:S.show;
+    box.innerHTML=AXES.map(a=>`<button data-ax="${a}" aria-pressed="${st[a]}" style="--c:${axColor(a)}">${AXLABEL[a]}</button>`).join("");
+    box.querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>{
+      st[b.dataset.ax]=!st[b.dataset.ax]; b.setAttribute("aria-pressed",String(st[b.dataset.ax]));
+      if(target==="live") drawLive(); else renderResult();
+    }));
+  });
+  $("#liveLegend").innerHTML=AXES.map(a=>`<span><i style="border-color:${axColor(a)}"></i>${AXLABEL[a]}</span>`).join("");
+}
 function renderAll(){ renderResult(); renderEval(); renderSuggest(); }
 function renderResult(){
   const r=S.result;
   $("#noResult").hidden=!!r; $("#resultBody").hidden=!r;
+  $("#octCurveSeg").hidden=S.view!=="oct";
   if(!r) return;
-  const accent=cssv("--accent"), noiseC=cssv("--noise"), nz=S.noise[r.axis];
-  const fmax=r.fs/2, series=[], leg=[];
-  if(S.view==="asd"&&r.psd){
-    const d=logDecimate(r.psd.f,Array.from(r.psd.v,v=>Math.sqrt(v)*100),0.5,fmax,700);
-    series.push({x:d.x,y:d.y,color:accent,width:1.4}); leg.push(["測定",accent]);
-    if(nz&&nz.psd){ const n=logDecimate(nz.psd.f,nz.psd.v.map(v=>Math.sqrt(v)*100),0.5,fmax,700); series.unshift({x:n.x,y:n.y,color:noiseC,width:1.2}); leg.push(["自己ノイズ",noiseC]); }
-    plot($("#chart"),{series,xlog:true,ylog:true,xr:[0.5,fmax],xlabel:"周波数 [Hz]",ylabel:"gal/√Hz",markers:r.peaks.map(p=>p.f)});
+  const fmax=r.fs/2, series=[], leg=[], markers=[];
+  const vis=AXES.filter(a=>S.show[a]);
+  if(S.view==="asd"){
+    for(const a of vis){
+      const R=r.axes[a], c=axColor(a), nz=S.noise[a];
+      if(nz&&nz.psd){ const n=logDecimate(nz.psd.f,nz.psd.v.map(v=>Math.sqrt(v)*100),0.5,fmax,600); series.push({x:n.x,y:n.y,color:c,width:1,dash:[4,3],alpha:0.7}); }
+      if(R.psd){ const d=logDecimate(R.psd.f,Array.from(R.psd.v,v=>Math.sqrt(v)*100),0.5,fmax,600); series.push({x:d.x,y:d.y,color:c,width:1.4}); }
+      leg.push([AXLABEL[a],c,false]); if(nz) leg.push([AXLABEL[a]+" 自己ノイズ",c,true]);
+      R.peaks.forEach(p=>markers.push({f:p.f,color:c}));
+    }
+    plot($("#chart"),{series,xlog:true,ylog:true,xr:[0.5,fmax],xlabel:"周波数 [Hz]",ylabel:"gal/√Hz",markers});
   } else if(S.view==="amp"){
-    const d=logDecimate(r.amp.f,Array.from(r.amp.v,v=>v*100),0.5,fmax,900);
-    series.push({x:d.x,y:d.y,color:accent,width:1}); leg.push(["フーリエ振幅",accent]);
-    plot($("#chart"),{series,xlog:true,ylog:true,xr:[0.5,fmax],xlabel:"周波数 [Hz]",ylabel:"gal",markers:r.peaks.map(p=>p.f)});
+    for(const a of vis){
+      const R=r.axes[a], c=axColor(a), d=logDecimate(R.amp.f,Array.from(R.amp.v,v=>v*100),0.5,fmax,800);
+      series.push({x:d.x,y:d.y,color:c,width:1}); leg.push([AXLABEL[a],c,false]);
+      R.peaks.forEach(p=>markers.push({f:p.f,color:c}));
+    }
+    plot($("#chart"),{series,xlog:true,ylog:true,xr:[0.5,fmax],xlabel:"周波数 [Hz]",ylabel:"フーリエ振幅 [gal]",markers});
   } else {
-    const set=S.curveSets[S.curveIdx]||{}, useR=set.quantity==="rms", toGal=set.unit==="m/s2"?100:1;
-    (set.curves||[]).filter(c=>c.points&&c.points.length).sort((a,b)=>a.rank-b.rank).forEach((c,i)=>{
+    const set=S.octCurves==="v"?S.curveSets[S.vIdx]:S.octCurves==="h"?S.curveSets[S.hIdx]:null;
+    const useR=set&&set.quantity==="rms", toGal=set&&set.unit==="m/s2"?100:1;
+    if(set) (set.curves||[]).filter(c=>c.points&&c.points.length).sort((a,b)=>a.rank-b.rank).forEach((c,i)=>{
       const p=[...c.points].sort((a,b)=>a.f-b.f), col=CURVE_COLORS[i%CURVE_COLORS.length];
-      series.push({x:p.map(q=>q.f),y:p.map(q=>q.a*toGal),color:col,width:1,dash:[5,4]}); leg.push([c.name,col]);
+      series.push({x:p.map(q=>q.f),y:p.map(q=>q.a*toGal),color:col,width:1.2,dash:[6,4]}); leg.push([c.name,col,true]);
     });
-    if(nz&&nz.oct){ series.push({x:nz.oct.map(b=>b.nominal),y:nz.oct.map(b=>(useR?b.rms:b.peak)*100),color:noiseC,width:1.2,points:true}); leg.push(["自己ノイズ",noiseC]); }
-    series.push({x:r.oct.map(b=>b.nominal),y:r.oct.map(b=>(useR?b.rms:b.peak)*100),color:accent,width:2,points:true});
-    leg.push(["測定（"+(useR?"実効値":"最大値")+"）",accent]);
+    for(const a of vis){
+      const R=r.axes[a], c=axColor(a), nz=S.noise[a];
+      if(nz&&nz.oct){ series.push({x:nz.oct.map(b=>b.nominal),y:nz.oct.map(b=>(useR?b.rms:b.peak)*100),color:c,width:1,dash:[2,3],alpha:0.6}); }
+      series.push({x:R.oct.map(b=>b.nominal),y:R.oct.map(b=>(useR?b.rms:b.peak)*100),color:c,width:2,points:true});
+      leg.push([AXLABEL[a]+"（"+(useR?"実効値":"最大値")+"）",c,false]); if(nz) leg.push([AXLABEL[a]+" 自己ノイズ",c,true]);
+    }
     plot($("#chart"),{series,xlog:true,ylog:true,xr:[0.8,40],xlabel:"1/3オクターブバンド中心周波数 [Hz]",ylabel:"gal"});
   }
-  $("#legend").innerHTML=leg.map(([n,c])=>`<span><i style="background:${c}"></i>${esc(n)}</span>`).join("");
-  let info=`${AXLABEL[r.axis]}／解析長 ${r.dur.toFixed(1)} s／実測 ${r.rate.toFixed(1)} Hz（${r.fs} Hzで再サンプリング）`;
-  if(r.psd) info+=`／Welch Δf = ${(r.psd.f[1]).toFixed(3)} Hz（${r.psd.segs} 回平均）`;
-  if(r.gap>3/r.fs) info+=`／注意：最大 ${(r.gap*1000).toFixed(0)} ms の取りこぼし`;
+  $("#legend").innerHTML=leg.map(([n,c,d])=>`<span><i class="${d?"d":""}" style="border-color:${c}"></i>${esc(n)}</span>`).join("");
+  let info=`開始 ${fmtDateTime(r.t0)}${r.sched?"（予約計測）":""}／解析長 ${r.dur.toFixed(1)} s／実測 ${r.rate.toFixed(1)} Hz（${r.fs} Hzで再サンプリング）`;
+  const psd=r.axes.z.psd; if(psd) info+=`／Welch Δf = ${psd.f[1].toFixed(3)} Hz（${psd.segs} 回平均）`;
+  if(r.offset!=null) info+=`／時刻補正 ${r.offset>=0?"+":""}${r.offset.toFixed(0)} ms 適用`;
+  if(r.gap>3000/r.fs) info+=`／注意：最大 ${r.gap.toFixed(0)} ms の取りこぼし`;
   $("#info").textContent=info;
-  const t=$("#peaks");
-  if(!r.peaks.length){ t.innerHTML=""; $("#peakNote").textContent="明瞭なピークは見つかりませんでした。記録を長くするか、加振して測定してください。"; }
-  else {
-    t.innerHTML="<tr><th>振動数</th><th>フーリエ振幅</th><th>減衰定数 h</th></tr>"+r.peaks.map(p=>
-      `<tr><td><b>${p.f.toFixed(2)} Hz</b></td><td>${p.amp.toFixed(3)} gal</td><td class="${p.rel?"":"dim"}">${p.h==null?"–":(p.h*100).toFixed(1)+"%"}</td></tr>`).join("");
-    $("#peakNote").textContent="減衰定数は半パワー法（常時微動向け）です。灰色は周波数分解能が不足しています。ヒールドロップなど自由減衰波形では過小評価になるため参考値としてください。";
-  }
-  $("#clearNoise").hidden=!nz;
+  const rows=[];
+  for(const a of ["z","x","y"]) for(const p of r.axes[a].peaks)
+    rows.push(`<tr><td class="axname" style="color:${axColor(a)}">${AXLABEL[a]}</td><td><b>${p.f.toFixed(2)} Hz</b></td><td>${p.amp.toFixed(3)} gal</td><td class="${p.rel?"":"dim"}">${p.h==null?"–":(p.h*100).toFixed(1)+"%"}</td></tr>`);
+  $("#peaks").innerHTML=rows.length?"<tr><th>方向</th><th>振動数</th><th>フーリエ振幅</th><th>減衰定数 h</th></tr>"+rows.join(""):"";
+  $("#peakNote").textContent=rows.length?"減衰定数は半パワー法（常時微動向け）です。灰色は周波数分解能が不足しています。ヒールドロップなど自由減衰波形では過小評価になるため参考値としてください。":"明瞭なピークは見つかりませんでした。記録を長くするか、加振して測定してください。";
+  $("#clearNoise").hidden=!AXES.some(a=>S.noise[a]);
 }
-function esc(s){ return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+
+// ================= CSV =================
+$("#csvBtn").addEventListener("click",async()=>{
+  const r=S.result; if(!r) return;
+  const n=r.raw[0].length, dt=1000/r.fs, lines=[];
+  lines.push("# 環境振動計測 CSV（加速度は重力成分を含む生値, 等間隔再サンプリング後）");
+  lines.push("# start_local,"+fmtDateTime(r.t0));
+  lines.push("# start_utc,"+new Date(r.t0).toISOString());
+  lines.push("# sampling_Hz,"+r.fs);
+  lines.push("# time_offset_applied_ms,"+(r.offset==null?"none":r.offset.toFixed(1)));
+  lines.push("# device,"+navigator.userAgent.replace(/,/g," "));
+  lines.push("epoch_ms,t_s,ax_ms2,ay_ms2,az_ms2");
+  for(let i=0;i<n;i++) lines.push(`${(r.t0+i*dt).toFixed(1)},${(i/r.fs).toFixed(4)},${r.raw[0][i].toFixed(6)},${r.raw[1][i].toFixed(6)},${r.raw[2][i].toFixed(6)}`);
+  lines.push(""); lines.push("# 1/3オクターブバンド（gal）"); lines.push("band_Hz,x_peak,x_rms,y_peak,y_rms,z_peak,z_rms");
+  r.axes.z.oct.forEach((b,i)=>{ const X=r.axes.x.oct[i], Y=r.axes.y.oct[i];
+    lines.push(`${b.nominal},${(X.peak*100).toFixed(5)},${(X.rms*100).toFixed(5)},${(Y.peak*100).toFixed(5)},${(Y.rms*100).toFixed(5)},${(b.peak*100).toFixed(5)},${(b.rms*100).toFixed(5)}`); });
+  const d=new Date(r.t0), name=`vib_${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}.csv`;
+  const file=new File([lines.join("\n")],name,{type:"text/csv"});
+  try{
+    if(navigator.canShare&&navigator.canShare({files:[file]})){ await navigator.share({files:[file],title:name}); return; }
+  }catch(e){ if(e&&e.name==="AbortError") return; }
+  const url=URL.createObjectURL(file), a=document.createElement("a");
+  a.href=url; a.download=name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),10000);
+});
 
 // ================= 評価 =================
 function curveValue(c,f){
@@ -586,7 +745,7 @@ function curveValue(c,f){
   return null;
 }
 function evaluate(oct,set,noise,snr){
-  const notes=[]; if(set.note) notes.push(set.note);
+  const notes=[];
   const curves=(set.curves||[]).filter(c=>c.points&&c.points.length).sort((a,b)=>a.rank-b.rank);
   if(!curves.length){ notes.push("この評価基準には曲線データが入力されていません。下の「曲線データの編集」で原典の折れ点を入力してください。"); return {grade:null,curves:[],notes}; }
   const useR=set.quantity==="rms", toSI=set.unit==="m/s2"?1:0.01, meas=b=>Math.max(useR?b.rms:b.peak,1e-12);
@@ -606,47 +765,127 @@ function evaluate(oct,set,noise,snr){
   return {grade:bi>=0?js[bi].name:null,margin:bi>=0?js[bi].margin:null,curves:js,notes};
 }
 function renderCurveSel(){
-  $("#curveSel").innerHTML=S.curveSets.map((c,i)=>`<option value="${i}">${esc(c.name)}</option>`).join("");
-  $("#curveSel").value=String(S.curveIdx);
+  const opt=(filter,sel)=>S.curveSets.map((c,i)=>filter(c)?`<option value="${i}"${i===sel?" selected":""}>${esc(c.name)}</option>`:"").join("");
+  $("#vSel").innerHTML=opt(c=>c.axis!=="horizontal",S.vIdx);
+  $("#hSel").innerHTML=opt(c=>c.axis==="horizontal",S.hIdx);
+  if(!S.curveSets[S.vIdx]||S.curveSets[S.vIdx].axis==="horizontal") S.vIdx=+($("#vSel").value||0);
+  if(!S.curveSets[S.hIdx]||S.curveSets[S.hIdx].axis!=="horizontal") S.hIdx=+($("#hSel").value||-1);
   $("#curveJson").value=JSON.stringify(S.curveSets,null,2);
 }
-function renderEval(){
-  const r=S.result, set=S.curveSets[S.curveIdx];
-  if(!r||!set){ $("#evalBody").innerHTML='<p class="note">測定後に表示されます。</p>'; return; }
-  const nz=S.noise[r.axis], e=evaluate(r.oct,set,nz?nz.oct:null,S.settings.snr);
-  let h="";
+function evalBlock(ax,set){
+  const r=S.result, c=axColor(ax);
+  let h=`<h3 style="color:${c}">${AXLABEL[ax]}</h3>`;
+  if(!set) return h+'<p class="note">評価基準が選ばれていません。</p>';
+  const nz=S.noise[ax], e=evaluate(r.axes[ax].oct,set,nz?nz.oct:null,S.settings.snr);
   if(e.curves.length){
     h+=`<div class="grade">${e.grade?esc(e.grade)+" 相当":"該当なし"}</div>`;
     if(e.margin!=null) h+=`<p class="note" style="margin-top:0">余裕 ${e.margin.toFixed(1)} dB</p>`;
-    h+="<table><tr><th>曲線</th><th>最小余裕</th><th>支配バンド</th><th>判定</th></tr>"+e.curves.map(c=>
-      `<tr><td>${esc(c.name)}</td><td>${c.margin==null?"–":(c.margin>=0?"+":"")+c.margin.toFixed(1)+" dB"}</td><td>${c.limiting==null?"–":c.limiting+" Hz"}</td><td class="${c.passed?"pass":"fail"}">${c.passed?"適合":"超過"}</td></tr>`).join("")+"</table>";
+    h+="<table><tr><th>曲線</th><th>最小余裕</th><th>支配バンド</th><th>判定</th></tr>"+e.curves.map(q=>
+      `<tr><td>${esc(q.name)}</td><td>${q.margin==null?"–":(q.margin>=0?"+":"")+q.margin.toFixed(1)+" dB"}</td><td>${q.limiting==null?"–":q.limiting+" Hz"}</td><td class="${q.passed?"pass":"fail"}">${q.passed?"適合":"超過"}</td></tr>`).join("")+"</table>";
   }
-  h+=e.notes.map(n=>`<p class="note">${esc(n)}</p>`).join("");
-  h+=`<p class="note">評価軸：${AXLABEL[r.axis]}。鉛直の評価曲線は鉛直Zの測定に対して使ってください。</p>`;
+  return h+e.notes.map(n=>`<p class="note">${esc(n)}</p>`).join("");
+}
+function renderEval(){
+  if(!S.result){ $("#evalBody").innerHTML='<p class="note">測定後に表示されます。</p>'; return; }
+  const vs=S.curveSets[S.vIdx], hs=S.curveSets[S.hIdx];
+  let h=evalBlock("z",vs)+evalBlock("x",hs)+evalBlock("y",hs);
+  const notes=[vs&&vs.note, hs&&hs.note].filter(Boolean);
+  h+=notes.map(n=>`<p class="note">${esc(n)}</p>`).join("");
   $("#evalBody").innerHTML=h;
 }
-$("#curveSel").addEventListener("change",e=>{ S.curveIdx=+e.target.value; store.set("curveIdx",S.curveIdx); renderAll(); });
+$("#vSel").addEventListener("change",e=>{ S.vIdx=+e.target.value; store.set("vIdx",S.vIdx); renderAll(); });
+$("#hSel").addEventListener("change",e=>{ S.hIdx=+e.target.value; store.set("hIdx",S.hIdx); renderAll(); });
 $("#saveCurves").addEventListener("click",()=>{
   try{
     const v=JSON.parse($("#curveJson").value);
     if(!Array.isArray(v)||!v.every(s=>s.name&&Array.isArray(s.curves))) throw new Error("配列の各要素に name と curves が必要です");
-    S.curveSets=v; S.curveIdx=Math.min(S.curveIdx,v.length-1); store.set("curves",v);
-    renderCurveSel(); renderAll(); $("#curveMsg").textContent="保存しました。";
+    S.curveSets=v; store.set("curves",v); renderCurveSel(); store.set("vIdx",S.vIdx); store.set("hIdx",S.hIdx);
+    renderAll(); $("#curveMsg").textContent="保存しました。";
   }catch(err){ $("#curveMsg").textContent="JSONを読み取れません："+err.message; }
 });
 $("#resetCurves").addEventListener("click",()=>{
-  S.curveSets=JSON.parse(JSON.stringify(DEFAULT_CURVES)); S.curveIdx=0; store.set("curves",S.curveSets);
+  S.curveSets=JSON.parse(JSON.stringify(DEFAULT_CURVES)); S.vIdx=0; S.hIdx=2;
+  store.set("curves",S.curveSets); store.set("vIdx",0); store.set("hIdx",2);
   renderCurveSel(); renderAll(); $("#curveMsg").textContent="初期値に戻しました。";
 });
 
 // ================= 自己ノイズ =================
 $("#saveNoise").addEventListener("click",()=>{
   const r=S.result; if(!r) return;
-  S.noise[r.axis]={oct:r.oct, psd:r.psd?{f:Array.from(r.psd.f),v:Array.from(r.psd.v)}:null};
-  store.set("noise",S.noise); setStatus(AXLABEL[r.axis]+" の自己ノイズ基準を登録しました。"); renderAll();
+  for(const a of AXES){ const R=r.axes[a]; S.noise[a]={oct:R.oct,psd:R.psd?{f:Array.from(R.psd.f),v:Array.from(R.psd.v)}:null}; }
+  store.set("noise",S.noise); setStatus("3方向の自己ノイズ基準を登録しました。"); renderAll();
 });
-$("#clearNoise").addEventListener("click",()=>{
-  if(!S.result) return; delete S.noise[S.result.axis]; store.set("noise",S.noise); renderAll();
+$("#clearNoise").addEventListener("click",()=>{ S.noise={}; store.set("noise",S.noise); renderAll(); });
+
+// ================= 時刻 =================
+function clockLoop(){
+  const t=nowCorr(), s=fmtClock(t);
+  $("#clock").innerHTML=s.slice(0,8)+"<small>"+s.slice(8)+"</small>";
+  if($("#tab-time").classList.contains("on")||S.armed||S.rec) requestAnimationFrame(clockLoop);
+}
+$("#clockNote").textContent="端末の時計を表示しています";
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+$("#tcBtn").addEventListener("click",async()=>{
+  const btn=$("#tcBtn"); btn.disabled=true; $("#tcRes").textContent="サーバーと時刻を比べています（約4秒）…";
+  const url=location.href.split("#")[0].split("?")[0];
+  let lo=-Infinity, hi=Infinity, n=0;
+  for(let i=0;i<30;i++){
+    const t0=Date.now();
+    try{
+      const res=await fetch(url+"?tc="+t0+"_"+i,{method:"HEAD",cache:"no-store"});
+      const t1=Date.now(), d=res.headers.get("Date");
+      if(d){ const sv=Date.parse(d); if(isFinite(sv)){ lo=Math.max(lo,sv-t1); hi=Math.min(hi,sv+1000-t0); n++; } }
+    }catch(e){}
+    await sleep(70+Math.random()*90);
+  }
+  btn.disabled=false;
+  if(n<5){ $("#tcRes").textContent="サーバーの時刻を取得できませんでした。ネットワークにつながった状態で、GitHub Pagesなどに置いたページから実行してください。"; return; }
+  if(lo>hi){ $("#tcRes").textContent="サーバーの応答が一定せず、ズレを確定できませんでした。時間をおいて再度お試しください。"; return; }
+  S.offset=(lo+hi)/2; S.offsetErr=(hi-lo)/2;
+  const sign=S.offset>=0?"遅れて":"進んで";
+  $("#tcRes").textContent=`端末の時計はサーバーより約 ${Math.abs(S.offset).toFixed(0)} ms ${sign}います（推定の幅 ±${S.offsetErr.toFixed(0)} ms、${n} 回の応答から推定）。`+
+    (Math.abs(S.offset)<=S.offsetErr?" ズレは推定の幅の中に収まっており、補正の必要はほぼありません。":"");
+  $("#useOff").disabled=false;
+});
+$("#useOff").addEventListener("change",e=>{ S.useOffset=e.target.checked; $("#clockNote").textContent=S.useOffset?`サーバー時刻に補正した時計を表示しています（${S.offset>=0?"+":""}${S.offset.toFixed(0)} ms）`:"端末の時計を表示しています"; });
+
+// ================= 予約計測 =================
+function toHalf(s){ return s.replace(/[０-９：]/g,c=>c==="："?":":String.fromCharCode(c.charCodeAt(0)-0xFEE0)); }
+function parseStart(str){
+  const m=toHalf(str.trim()).match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/); if(!m) return null;
+  const h=+m[1], mi=+m[2], se=+(m[3]||0); if(h>23||mi>59||se>59) return null;
+  const now=nowCorr(), d=new Date(now); d.setHours(h,mi,se,0);
+  let t=d.getTime(); if(t<now+3000) t+=86400000;   // 過ぎていれば翌日
+  return t;
+}
+document.querySelectorAll("[data-quick]").forEach(b=>b.addEventListener("click",()=>{
+  const min=+b.dataset.quick, now=nowCorr(); let t=Math.ceil((now+(min-1)*60000)/60000)*60000;
+  if(t-now<20000) t+=60000;
+  const d=new Date(t); $("#schStart").value=`${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}));
+$("#schBtn").addEventListener("click",async()=>{
+  if(S.rec){ stopRec(); return; }
+  if(S.armed){ cancelReserve(); return; }
+  const start=parseStart($("#schStart").value), dur=parseFloat($("#schDur").value);
+  if(start==null){ setStatus("開始時刻を「14:30:00」の形で入力してください。",true); return; }
+  if(!(dur>=5)){ setStatus("計測時間は5秒以上にしてください。",true); return; }
+  if(!(await attachSensor())) return;
+  S.sched={start,end:start+dur*1000}; S.armed=true;
+  setStatus(`予約しました：${fmtDateTime(start)} から ${dur} 秒。端末を床に置いて、触れずにお待ちください。`);
+  updateRecBtn(); requestAnimationFrame(liveLoop); requestAnimationFrame(clockLoop); countdownLoop();
+});
+function updateCountdown(){
+  const el=$("#countdown");
+  if(!S.sched){ el.textContent=""; return; }
+  const now=nowCorr();
+  if(now<S.sched.start){
+    const r=(S.sched.start-now)/1000, h=Math.floor(r/3600), m=Math.floor(r%3600/60), s=r%60;
+    el.textContent=`開始まで ${h?h+":":""}${pad(m)}:${s.toFixed(1).padStart(4,"0")}`;
+  } else el.textContent=`計測中　残り ${Math.max(0,(S.sched.end-now)/1000).toFixed(0)} 秒`;
+}
+function countdownLoop(){ updateCountdown(); if(S.sched) setTimeout(countdownLoop,100); }
+document.addEventListener("visibilitychange",()=>{
+  if(document.hidden&&(S.armed||S.rec)) setStatus("画面が切り替わったため、計測が止まっている可能性があります。",true);
 });
 
 // ================= メトロノーム =================
@@ -679,11 +918,17 @@ $("#bpmR").addEventListener("input",e=>setBpm(+e.target.value));
 document.querySelectorAll("[data-d]").forEach(b=>b.addEventListener("click",()=>setBpm(M.bpm+ +b.dataset.d)));
 function renderSuggest(){
   const r=S.result, el=$("#suggest");
-  if(!r||!r.peaks.length){ el.innerHTML=""; return; }
-  const f=[...r.peaks].sort((a,b)=>b.asd-a.asd)[0].f, opts=[];
-  for(let n=1;n<=6;n++){ const h=f/n; if(h>=1.0&&h<=3.5) opts.push([n,h]); }
-  el.innerHTML=`<p class="note">最大ピーク ${f.toFixed(2)} Hz に合わせた人力加振のテンポ：</p><div class="chips">`+
-    (opts.length?opts.map(([n,h])=>`<button data-bpm="${(h*60).toFixed(1)}">${n===1?"f":"f/"+n} = ${h.toFixed(2)} Hz（${Math.round(h*60)} BPM）</button>`).join(""):'<span class="note">1〜3.5 Hzに入る分数調波がありません。</span>')+"</div>";
+  if(!r){ el.innerHTML=""; return; }
+  let html="";
+  for(const a of ["z","x","y"]){
+    const pk=r.axes[a].peaks; if(!pk.length) continue;
+    const f=[...pk].sort((p,q)=>q.asd-p.asd)[0].f, opts=[];
+    for(let n=1;n<=6;n++){ const h=f/n; if(h>=1.0&&h<=3.5) opts.push([n,h]); }
+    if(!opts.length) continue;
+    html+=`<p class="note">${AXLABEL[a]} の最大ピーク ${f.toFixed(2)} Hz に合わせた人力加振のテンポ：</p><div class="chips">`+
+      opts.map(([n,h])=>`<button data-bpm="${(h*60).toFixed(1)}">${n===1?"f":"f/"+n} = ${h.toFixed(2)} Hz（${Math.round(h*60)} BPM）</button>`).join("")+"</div>";
+  }
+  el.innerHTML=html;
   el.querySelectorAll("[data-bpm]").forEach(b=>b.addEventListener("click",()=>setBpm(+b.dataset.bpm)));
 }
 
@@ -694,24 +939,28 @@ function readSettingsUI(){
   for(const [k,id] of Object.entries(SET_IDS)){ const v=parseFloat($("#"+id).value); if(isFinite(v)) S.settings[k]=v; }
   S.settings.seg=parseInt($("#s-seg").value,10); S.settings.zero=$("#s-zero").checked; store.set("settings",S.settings);
 }
-$("#reanalyze").addEventListener("click",()=>{ readSettingsUI(); if(S.samples.length) analyze(); else setStatus("設定を保存しました。"); });
+$("#reanalyze").addEventListener("click",()=>{ readSettingsUI(); if(S.samples.length&&!S.rec&&!S.armed) analyze(S.result&&S.result.sched); else setStatus("設定を保存しました。"); });
 document.querySelectorAll("nav button").forEach(b=>b.addEventListener("click",()=>{
   document.querySelectorAll("nav button").forEach(x=>x.setAttribute("aria-selected",x===b?"true":"false"));
   document.querySelectorAll("section").forEach(s=>s.classList.toggle("on",s.id==="tab-"+b.dataset.tab));
   if(b.dataset.tab==="result") requestAnimationFrame(renderResult);
-}));
-document.querySelectorAll("#axisSeg button").forEach(b=>b.addEventListener("click",()=>{
-  S.axis=b.dataset.axis;
-  document.querySelectorAll("#axisSeg button").forEach(x=>x.setAttribute("aria-pressed",x===b?"true":"false"));
-  if(!S.rec&&S.samples.length>=200) analyze(); else drawLive();
+  if(b.dataset.tab==="time") requestAnimationFrame(clockLoop);
+  if(b.dataset.tab==="measure") requestAnimationFrame(drawLive);
 }));
 document.querySelectorAll("#viewSeg button").forEach(b=>b.addEventListener("click",()=>{
   S.view=b.dataset.view;
   document.querySelectorAll("#viewSeg button").forEach(x=>x.setAttribute("aria-pressed",x===b?"true":"false"));
   renderResult();
 }));
+document.querySelectorAll("#octCurveSeg button").forEach(b=>b.addEventListener("click",()=>{
+  S.octCurves=b.dataset.oc;
+  document.querySelectorAll("#octCurveSeg button").forEach(x=>x.setAttribute("aria-pressed",x===b?"true":"false"));
+  renderResult();
+}));
 window.addEventListener("resize",()=>{ if(S.result) renderResult(); drawLive(); });
-loadSettingsUI(); renderCurveSel(); setBpm(120);
+window.matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change",()=>{ buildAxisToggles(); if(S.result) renderResult(); });
+loadSettingsUI(); renderCurveSel(); setBpm(120); buildAxisToggles();
+document.querySelector('[data-quick="1"]').click();
 
 if("serviceWorker" in navigator){
   window.addEventListener("load",()=>{ navigator.serviceWorker.register("sw.js").catch(()=>{}); });

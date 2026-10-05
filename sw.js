@@ -1,5 +1,5 @@
 // オフライン用キャッシュ。index.html を更新したら VERSION の数字を上げる。
-const VERSION = "envvib-v1";
+const VERSION = "envvib-v2";
 const FILES = ["./", "./index.html", "./manifest.webmanifest",
                "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png"];
 
